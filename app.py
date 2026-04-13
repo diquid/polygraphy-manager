@@ -13,6 +13,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired
 from flask import abort
 from flask import Flask, send_file, render_template
+from flask import request, render_template
 
 
 
@@ -1514,7 +1515,11 @@ def render_materials(order_id):
 @app.route('/index')
 def index():   
     session = db.session
-    results = (
+
+    search_query = request.args.get('q', '').strip()
+    sort = request.args.get('sort', 'id_desc')  # по умолчанию
+
+    query = (
         session.query(
             Order.id_order,
             Order.status,
@@ -1526,16 +1531,34 @@ def index():
             Employee.patronymic,
             Employee.position_employee
         )
-        .outerjoin(Employee, Order.id_employee == Employee.id_employee)  # Получение информации о сотруднике
-        .filter(Order.id_parent_operation == 0)  # Получение всех заказов с родительским ID 0
-        .all()
+        .outerjoin(Employee, Order.id_employee == Employee.id_employee)
+        .filter(Order.id_parent_operation == 0)
     )
 
-    print(f"Количество заказов: {len(results)}")
-    print(f"Результаты запроса: {results}")
-    
+    # 🔍 Поиск
+    if search_query:
+        query = query.filter(Order.name_orders.ilike(f"%{search_query}%"))
+
+    # 🔽 Сортировка
+    if sort == 'id_asc':
+        query = query.order_by(Order.id_order.asc())
+    elif sort == 'id_desc':
+        query = query.order_by(Order.id_order.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Order.order_date.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Order.order_date.desc())
+
+    results = query.all()
+
     session.close()
-    return render_template("index.html", results=results)
+
+    return render_template(
+        "index.html",
+        results=results,
+        search_query=search_query,
+        sort=sort
+    )
 
 #вывод заказов со статусом шаблон
 @app.route('/template')
@@ -1733,6 +1756,7 @@ def new_order_add():
     operation_cost = 0    
     # Отображение страницы с деревом заказа и его деталями
     return render_template('tree_calculation.html', operations=operations, tree_html=tree_html, order_id=new_order_id, total_cost=total_cost, material_cost=material_cost, operation_cost=operation_cost)
+
 
 # Получение информации об операции
 @app.route('/tree_about_operation/<int:order_id>')
