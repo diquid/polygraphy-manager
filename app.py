@@ -657,7 +657,7 @@ def update_child_orders(cur, order_id, parent_id, child_id, parent_quantity_entr
                 value = 1
             quantity_entrance = colors 
             number_operations = colors
-            quantity_output = colors * quantity_in_one
+            quantity_output = colors * int(quantity_in_one or 1)
             defective = 0   
             print(f'quantity_entrance {quantity_entrance} number_operations {number_operations} quantity_output {quantity_output} defective {defective}')
         elif processing == 'Печать':
@@ -706,7 +706,7 @@ def update_child_orders(cur, order_id, parent_id, child_id, parent_quantity_entr
                 print(f'number_operations {number_operations}')
                 defective = math.ceil(number_operations * defective_percentage / 100 + defective_material)
                 print(f'defective {defective}')
-                quantity_output = parent_quantity_entrance * quantity_in_one
+                quantity_output = parent_quantity_entrance * int(quantity_in_one or 1)
                 print(f'quantity_output {quantity_output}')
                 quantity_entrance = (math.ceil(quantity_output / cutting_parts) + defective) 
                 print(f'quantity_entrance {quantity_entrance}')
@@ -716,7 +716,7 @@ def update_child_orders(cur, order_id, parent_id, child_id, parent_quantity_entr
         else:
             number_operations = parent_quantity_entrance
             defective = math.ceil(number_operations * defective_percentage / 100 + defective_material)
-            quantity_output = parent_quantity_entrance * quantity_in_one
+            quantity_output = parent_quantity_entrance * int(quantity_in_one or 1)
             quantity_entrance = (parent_quantity_entrance + defective) 
         
         cur.execute("""
