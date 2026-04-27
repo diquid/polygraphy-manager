@@ -1548,6 +1548,10 @@ def index():
         query = query.order_by(Order.order_date.asc())
     elif sort == 'date_desc':
         query = query.order_by(Order.order_date.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(Order.name_orders.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Order.name_orders.desc())
 
     results = query.all()
 

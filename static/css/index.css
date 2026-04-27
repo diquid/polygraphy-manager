@@ -1,16 +1,20 @@
 body {
-  background-color: #f8f9fa;
-  padding: 20px;
-  font-family: 'Roboto', sans-serif, 'Courier New', monospace; /* Пример использования фиксированного шрифта для цифр */
- 
+  padding-bottom:2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  /*background: linear-gradient(147deg, #d2d2d2, #f9fee7, #efeaff);*/
+  background: #d2d2d2;
   font-variant-numeric: lining-nums;
-
 }
 
 .text-blue {
   color: blue;
 }
 
+.navbar {
+  --bs-navbar-padding-y: 2rem;
+}
 
 h2 {
   text-align: left;
@@ -23,33 +27,109 @@ h1 {
 }
 
 .btn {
-  margin: 5px;
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1000px;
+}
+
+.btn-secondary {
+  border: 2px solid #8D8D8D;
+  color: #222222;
+  background-color: #F8F8F8;
+}
+
+.btn-secondary:hover {
+  border: 2px solid #4E4E4E;
+  background-color: #4E4E4E;
+  color: white;
+}
+
+.btn-action {
+  color: white;
+  background-color: #7E55FF;
+}
+
+.btn-action:hover {
+  color: white;
+  background-color: #9E80FF;
+}
+
+.btn-action:active {
+  color: white !important;
+  background-color: #6F41FF !important;
+  border-color: #6F41FF !important;
+}
+
+.btn-action-secondary {
+  color: #222222;
+  background-color: #C9F13A;
+}
+
+.btn-action-secondary:hover {
+  color: #222222;
+  background-color: #E4F89D;
+}
+
+.btn-action-secondary:active {
+  color: #222222 !important;
+  background-color: #B1E101 !important;
+  border-color: #B1E101 !important;
+}
+
+.active {
+  border: 2px solid #4E4E4E !important;
+  background-color: #4E4E4E !important;
+  color: white !important;
+}
+
+.hat {
+  padding: 1rem 1.5rem;
+  background-color: #F8F8F8;
+  border-radius: 1000px;
+}
+
+.search-hat {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .form-group {
   margin-bottom: 15px;
 }
 
+.search-input {
+  background-color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 1000px;
+  border: 2px solid #8D8D8D;
+  color: #222222;
+  margin-right: 0.2rem;
+}
+
+.slct{
+  background-color: #F8F8F8;
+  padding: 0.65rem 1rem;
+  border-radius: 1000px;
+  border: 2px solid #8D8D8D;
+  color: #222222;
+  margin-right: 0.2rem;
+}
+
 label {
   margin-top: 10px;
 }
 
-input[type="number"],
+/*input[type="number"],
 input[type="text"] {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
   border: 1px solid #ced4da;
   border-radius: 5px;
-}
+}*/
 
 input[readonly] {
   background-color: #e9ecef;
-}
-
-.active {
-  background-color: #007bff;
-  color: white;
 }
 
 p {
@@ -65,26 +145,40 @@ p {
   margin-top: 20px;
 }
 
+.table-wrap {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border-radius: 60px;
+  background-color: #F8F8F8;
+}
+
 table {
   width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
+  background-color: #F8F8F8;
+  border-radius: 40px;
+  overflow: hidden;
+  padding: 20px;
 }
 
-th,
+thead {
+  border-radius: 1000px;
+  overflow: hidden;
+  background-color: #D3D3D3;
+}
+
+/* ячейка */
 td {
-  padding: 10px;
+  padding: 10px 50px;
   text-align: left;
-  border: 1px solid #dee2e6;
+  color: #222222;
+  border-bottom: 1px solid #C6C6C6;
 }
 
+/* заголовочная ячейка */
 th {
-  background-color: #979797;
-  color: white;
-}
-
-tr:hover {
-  background-color: #f1f1f1;
+  padding: 10px 50px;
+  text-align: left;
+  color: #4E4E4E;
 }
 
 .button-group {
@@ -97,18 +191,6 @@ tr:hover {
   margin-bottom: 20px;
 }
 
-button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
 tr:nth-child(even) {
   background-color: #f2f2f2;
 }
