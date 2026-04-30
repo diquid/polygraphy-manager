@@ -2918,15 +2918,45 @@ def nomenclature_orders_delete(id):
 @app.route('/material_table', methods=['GET'])
 def material():
     if not current_user.is_authenticated:
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
+        flash('Ошибка: Доступ запрещен', 'danger')
         abort(403)
-    
-    if current_user.position_employee != 'администратор':  
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
-        abort(403)  # Запретить доступ         
-        
-    materials = Materials.query.all()  
-    return render_template("material_table.html", materials=materials) 
+
+    if current_user.position_employee != 'администратор':
+        flash('Ошибка: Доступ запрещен', 'danger')
+        abort(403)
+
+    # Получаем параметры
+    search_query = request.args.get('q', '')
+    sort = request.args.get('sort', 'op_id_asc')
+
+    query = Materials.query
+
+    # 🔍 Поиск
+    if search_query:
+        query = query.filter(Materials.name.ilike(f"%{search_query}%"))
+
+    # 🔽 Сортировка
+    if sort == 'op_id_asc':
+        query = query.order_by(Materials.id_materials.asc())
+    elif sort == 'op_id_desc':
+        query = query.order_by(Materials.id_materials.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(Materials.name.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Materials.name.desc())
+    elif sort == 'price_asc':
+        query = query.order_by(Materials.price.asc())
+    elif sort == 'price_desc':
+        query = query.order_by(Materials.price.desc())
+
+    materials = query.all()
+
+    return render_template(
+        "material_table.html",
+        materials=materials,
+        sort=sort,
+        search_query=search_query
+    )
 
 #создание нового материала
 @app.route('/new_materials')
