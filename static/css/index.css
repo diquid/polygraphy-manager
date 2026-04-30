@@ -3,7 +3,6 @@ body {
   padding-left: 2rem;
   padding-right: 2rem;
   font-family: 'IBM Plex Sans', sans-serif !important;
-  /*background: linear-gradient(147deg, #d2d2d2, #f9fee7, #efeaff);*/
   background: #d2d2d2;
   font-variant-numeric: lining-nums;
 }
@@ -90,7 +89,14 @@ h1 {
 
 .search-hat {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.search-hat form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .form-group {
@@ -193,4 +199,10 @@ th {
 
 tr:nth-child(even) {
   background-color: #f2f2f2;
+}
+
+.material-item {
+    width: 150px;
+    height: 150px;
+    background-color: red;
 }

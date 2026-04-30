@@ -1690,7 +1690,8 @@ def tree(order_id):
     # material_cost = calculate_order_amount_material(cur, order_id)  # Расчет стоимости материалов (закомментировано)
     # operation_cost = calculate_order_amount_operation(cur, order_id)  # Расчет стоимости операций (закомментировано)
     total_cost = 0  # Инициализация общей стоимости
-    total_cost = float(calculate_order_amount(cur, order_id))  # Расчет общей стоимости заказа    
+    total_cost = float(calculate_order_amount(cur, order_id))  # Расчет общей стоимости заказа   
+    html_materials = render_materials(order_id) 
     # Запрос для получения статуса заказа по его ID
     cur.execute("""
         SELECT status
@@ -1703,12 +1704,12 @@ def tree(order_id):
         # Отрисовываем дерево для статуса "расчет"
         tree_html = render_tree(order_id, tree, operations)  
         return render_template('tree_calculation.html', status=status[0], operations=operations, tree_html=tree_html, order_id=order_id, 
-                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost)
+                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost, html_materials=html_materials)
     else:
         # Отрисовываем проверенное дерево для других статусов
         tree_html = render_tree_verified(order_id, tree, operations)  
         return render_template('tree.html', status=status[0], operations=operations, tree_html=tree_html, order_id=order_id, 
-                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost)
+                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost, html_materials=html_materials)
 
 #создание нового заказа
 @app.route('/new_order')
@@ -2649,22 +2650,54 @@ def operation_table():
         abort(403)
     
     if current_user.position_employee != 'администратор':  
-        abort(403)  # Запретить доступ          
+        abort(403)
+
     session = db.session
-    operations = (
-    session.query(
-        Operation.id_operations, 
-        Operation.name_operations,
-        Operation.id_type_work,
-        Operation.processing,
-        PriceList.amount 
+
+    # 🔍 получаем параметры
+    search_query = request.args.get('q', '').strip()
+    sort = request.args.get('sort', 'op_id_desc')
+
+    # 🔧 БАЗОВЫЙ ЗАПРОС (БЕЗ .all())
+    query = (
+        session.query(
+            Operation.id_operations, 
+            Operation.name_operations,
+            Operation.id_type_work,
+            Operation.processing,
+            PriceList.amount 
+        )
+        .join(PriceList, Operation.id_price == PriceList.id_price)
+        .filter(Operation.base == True)
     )
-    .join(PriceList, Operation.id_price == PriceList.id_price)
-    .filter(Operation.base == True) 
-    .all()
-)
-    #operations = Operation.query.filter_by(base=True).all()  
-    return render_template("operation_table.html", operations=operations) 
+
+    # 🔍 ПОИСК
+    if search_query:
+        query = query.filter(Operation.name_operations.ilike(f"%{search_query}%"))
+
+    # 🔽 СОРТИРОВКА
+    if sort == 'op_id_asc':
+        query = query.order_by(Operation.id_operations.asc())
+    elif sort == 'op_id_desc':
+        query = query.order_by(Operation.id_operations.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(Operation.name_operations.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Operation.name_operations.desc())
+    elif sort == 'price_asc':
+        query = query.order_by(PriceList.amount.asc())
+    elif sort == 'price_desc':
+        query = query.order_by(PriceList.amount.desc())
+
+    # ✅ только здесь получаем результат
+    operations = query.all()
+
+    return render_template(
+        "operation_table.html",
+        operations=operations,
+        sort=sort,
+        search_query=search_query
+    ) 
 
 #создание новой операции
 @app.route('/new_operation')

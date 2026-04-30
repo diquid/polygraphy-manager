@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title style="color: blue;">Система печати</title>
+    <title>Система печати</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
@@ -34,9 +34,7 @@
                             <button onclick="window.location.href='/login'" class="btn btn-action-secondary">Войти</button>
                             {% endif %}
                         </div>
-
                     </div>
-
 
                     <div class="col-12 d-flex justify-content-start hat">
                         <button onclick="window.location.href='/index'" id="все-button" class="btn active">Все</button>
@@ -56,20 +54,22 @@
         </div>
     </nav>
 
-    <form class="hat search-hat" method="get">
-        <select class="slct" name="sort">
-            <option value="id_desc" {% if sort == 'id_desc' %}selected{% endif %}>По номеру (возрастает)</option>
-            <option value="id_asc" {% if sort == 'id_asc' %}selected{% endif %}>По номеру (убывает)</option>
-            <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>По дате (сначала новые)</option>
-            <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>По дате (сначала старые)</option>
-            <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>По алфавиту (A-Я)</option>
-            <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>По алфавиту (Я-А)</option>
-        </select>
+    <div class="hat search-hat">
+        <form method="get">
+            <select class="slct" name="sort">
+                <option value="id_desc" {% if sort == 'id_desc' %}selected{% endif %}>По номеру (возрастает)</option>
+                <option value="id_asc" {% if sort == 'id_asc' %}selected{% endif %}>По номеру (убывает)</option>
+                <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>По дате (сначала новые)</option>
+                <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>По дате (сначала старые)</option>
+                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>По алфавиту (A-Я)</option>
+                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>По алфавиту (Я-А)</option>
+            </select>
 
-        <input class="search-input" type="text" name="q" value="{{ search_query }}" placeholder="Поиск по названию заказа">
+            <input class="search-input" type="text" name="q" value="{{ search_query }}" placeholder="Поиск по названию заказа">
 
-        <button class="btn btn-action" type="submit">Найти</button>
-    </form>
+            <button class="btn btn-action" type="submit">Найти</button>
+        </form>
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
