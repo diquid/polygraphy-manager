@@ -3203,18 +3203,38 @@ def employee_delete(id):
     return employee_table()
 
 #таблица номенклатуры параметров операции
+from flask import request
+
 @app.route('/nomenclature_parameters_table', methods=['GET'])
 def nomenclature_parameters_table():
     if not current_user.is_authenticated:
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
+        flash('Ошибка: Доступ запрещен', 'danger')
         abort(403)
     
     if current_user.position_employee != 'администратор':  
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
-        abort(403)  # Запретить доступ         
-        
-    nomenclature_parameters = NomenclatureParameters.query.all()  
-    return render_template("nomenclature_parameters_table.html", nomenclature_parameters=nomenclature_parameters) 
+        flash('Ошибка: Доступ запрещен', 'danger')
+        abort(403)
+
+    sort = request.args.get('sort', 'id_asc')
+
+    query = NomenclatureParameters.query
+
+    if sort == 'id_asc':
+        query = query.order_by(NomenclatureParameters.id_nomenclature_parameters.asc())
+    elif sort == 'id_desc':
+        query = query.order_by(NomenclatureParameters.id_nomenclature_parameters.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(NomenclatureParameters.name_parameters.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(NomenclatureParameters.name_parameters.desc())
+
+    nomenclature_parameters = query.all()
+
+    return render_template(
+        "nomenclature_parameters_table.html",
+        nomenclature_parameters=nomenclature_parameters,
+        sort=sort
+    )
 
 #создание нового параметра операци
 @app.route('/new_nomenclature_parameters')
