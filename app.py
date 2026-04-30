@@ -2843,12 +2843,39 @@ def operation_delete(id):
 def nomenclature_orders_table():
     if not current_user.is_authenticated:
         abort(403)
-    
-    if current_user.position_employee != 'администратор':  
-        abort(403)  # Запретить доступ          
 
-    results = NomenclatureOrders.query.all()  
-    return render_template("nomenclature_orders_table.html", results=results) 
+    if current_user.position_employee != 'администратор':
+        abort(403)
+
+    search_query = request.args.get('q', '')
+    sort = request.args.get('sort', 'id_asc')
+
+    query = NomenclatureOrders.query
+
+    # 🔍 Поиск
+    if search_query:
+        query = query.filter(
+            NomenclatureOrders.name_nomenclature_orders.ilike(f"%{search_query}%")
+        )
+
+    # 🔽 Сортировка
+    if sort == 'id_asc':
+        query = query.order_by(NomenclatureOrders.id_nomenclature_orders.asc())
+    elif sort == 'id_desc':
+        query = query.order_by(NomenclatureOrders.id_nomenclature_orders.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(NomenclatureOrders.name_nomenclature_orders.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(NomenclatureOrders.name_nomenclature_orders.desc())
+
+    results = query.all()
+
+    return render_template(
+        "nomenclature_orders_table.html",
+        results=results,
+        sort=sort,
+        search_query=search_query
+    )
 
 #создание новой номенклатуры заказа
 @app.route('/new_nomenclature_orders')
