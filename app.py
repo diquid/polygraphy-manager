@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 import psycopg2
 import math
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import case
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -3053,16 +3054,67 @@ def material_delete(id):
 
 #таблица сотрудников
 @app.route('/employee_table', methods=['GET'])
-def employee_table():   
+def employee_table():
     if not current_user.is_authenticated:
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
+        flash('Ошибка: Доступ запрещен', 'danger')
         abort(403)
-    
-    if current_user.position_employee != 'администратор':  
-        flash('Ошибка: Доступ запрещен', 'danger')  # Сообщение об ошибке
-        abort(403)  # Запретить доступ       
-    employees = Employee.query.all()  
-    return render_template("employee_table.html", employees=employees) 
+
+    if current_user.position_employee != 'администратор':
+        flash('Ошибка: Доступ запрещен', 'danger')
+        abort(403)
+
+    search_query = request.args.get('q', '')
+    sort = request.args.get('sort', 'id_asc')
+
+    query = Employee.query
+
+    # 🔍 Поиск (по ФИО)
+    if search_query:
+        query = query.filter(
+            Employee.surname.ilike(f"%{search_query}%") |
+            Employee.name_employee.ilike(f"%{search_query}%") |
+            Employee.patronymic.ilike(f"%{search_query}%")
+        )
+
+    # 🔽 Сортировка
+    if sort == 'id_asc':
+        query = query.order_by(Employee.id_employee.asc())
+    elif sort == 'id_desc':
+        query = query.order_by(Employee.id_employee.desc())
+
+    elif sort == 'surname_asc':
+        query = query.order_by(Employee.surname.asc())
+    elif sort == 'surname_desc':
+        query = query.order_by(Employee.surname.desc())
+
+    elif sort == 'name_asc':
+        query = query.order_by(Employee.name_employee.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Employee.name_employee.desc())
+
+    elif sort == 'patronymic_asc':
+        query = query.order_by(Employee.patronymic.asc())
+    elif sort == 'patronymic_desc':
+        query = query.order_by(Employee.patronymic.desc())
+
+    # 🔥 Сортировка по роли
+    elif sort == 'role_admin_first':
+        query = query.order_by(
+            case((Employee.position_employee == 'администратор', 0), else_=1)
+        )
+    elif sort == 'role_manager_first':
+        query = query.order_by(
+            case((Employee.position_employee == 'менеджер', 0), else_=1)
+        )
+
+    employees = query.all()
+
+    return render_template(
+        "employee_table.html",
+        employees=employees,
+        sort=sort,
+        search_query=search_query
+    )
 
 #создание нового сотрудника
 @app.route('/new_employee')
