@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Технологические операции</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Переключить навигацию">
@@ -19,22 +19,24 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="row w-100">
-                    <div class="col-12 d-flex justify-content-between mb-2">
+
+                    <div class="col-12 d-flex justify-content-between mb-2 hat">
                         <div>
                             <button onclick="window.location.href='/operation_table'"
                                 class="btn active">Справочники</button>
-                            <button onclick="window.location.href='/index'" class="btn btn-secondary">Журнал
-                                заказов</button>
+                            <button onclick="window.location.href='/index'" class="btn btn-secondary">Журнал заказов</button>
                         </div>
+
                         <div>
                             {% if current_user.is_authenticated %}
-                            <button onclick="window.location.href='/logout'" class="btn btn-danger">Выход</button>
+                            <button onclick="window.location.href='/logout'" class="btn btn-danger">Выйти</button>
                             {% else %}
-                            <button onclick="window.location.href='/login'" class="btn btn-secondary">Вход</button>
+                            <button onclick="window.location.href='/login'" class="btn btn-action-secondary">Войти</button>
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-12 d-flex justify-content-start">
+
+                    <div class="col-12 d-flex justify-content-start hat">
                         <button onclick="window.location.href='/operation_table'" class="btn active">Технологические
                             операции</button>
                         <button onclick="window.location.href='/material_table'"
@@ -59,58 +61,70 @@
         {% endfor %}
       </div>
     {% endif %}
-  {% endwith %}
+    {% endwith %}
 
-    <div class="container mt-5">
-        <h1>Изменить операцию</h1>
-        
-        <form method="POST" action="{{ url_for('operation_update') }}">
-            <input type="hidden" class="form-control" id="id_operations" name="id_operations" value = "{{ operation.id_operations }}" required>
-            <input type="hidden" class="form-control" id="id_price" name="id_price" value = "{{ operation.id_price }}" required>
-            <div class="form-group">
-                <label for="name">Название операции:</label>
-                <input type="text" class="form-control" id="name_operations" name="name_operations" value = "{{ operation.name_operations }}" required>
+    <div class="operation-wrapper">
+        <div class="operation-card">
+
+            <div class="operation-title">
+                Изменение операции
             </div>
-            <div class="form-group">
-                <label for="id_type_work">Тип работы:</label>
-                <select class="form-control" id="id_type_work" name="id_type_work" required>
-                    <option value="после_печати" {% if operation.id_type_work == 2 %}selected{% endif %}>ПослеПечать</option>
-                    <option value="печать" {% if operation.id_type_work == 4 %}selected{% endif %}>Печать</option>
-                    <option value="препресс" {% if operation.id_type_work == 1 %}selected{% endif %}>Препресс</option>
-                    <option value="до_печати" {% if operation.id_type_work == 3 %}selected{% endif %}>ДоПечать</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="processing">Обработка:</label>
-                <select class="form-control" id="processing" name="processing" required>
-                    <option value="Фотовывод" {% if operation.processing == 'Фотовывод' %}selected{% endif %}>Фотовывод</option>
-                    <option value="Печать" {% if operation.processing == 'Печать' %}selected{% endif %}>Печать</option>
-                    <option value="Резка" {% if operation.processing == 'Резка' %}selected{% endif %}>Резка</option>
-                    <option value="Стандарт" {% if operation.processing == 'Стандарт' %}selected{% endif %}>Стандарт</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="price">Цена:</label>
-                <input type="number" class="form-control" id="amount" name="amount" step="0.01" value = "{{operation.amount}}" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Изменить</button>
-        </form>
-        
-        <div class="d-flex left">
-            <form action="{{ url_for('operation_delete', id=operation.id_operations) }}" method="POST" style="display:inline;">
-                <input type="hidden" class="form-control" id="name" name="name" value = "{{ operation.id_operations }}" required>
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить эту операцию?');">Удалить</button>
+
+            <form method="POST" action="{{ url_for('operation_update') }}">
+
+                <input type="hidden" name="id_operations" value="{{ operation.id_operations }}">
+                <input type="hidden" name="id_price" value="{{ operation.id_price }}">
+
+                <div class="form-field">
+                    <label>Название операции</label>
+                    <input type="text" name="name_operations" value="{{ operation.name_operations }}" required>
+                </div>
+
+                <div class="form-field">
+                    <label>Тип работы</label>
+                    <select name="id_type_work" required>
+                        <option value="2" {% if operation.id_type_work == 2 %}selected{% endif %}>ПослеПечать</option>
+                        <option value="4" {% if operation.id_type_work == 4 %}selected{% endif %}>Печать</option>
+                        <option value="1" {% if operation.id_type_work == 1 %}selected{% endif %}>Препресс</option>
+                        <option value="3" {% if operation.id_type_work == 3 %}selected{% endif %}>ДоПечать</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Обработка</label>
+                    <select name="processing" required>
+                        <option value="Фотовывод" {% if operation.processing == 'Фотовывод' %}selected{% endif %}>Фотовывод</option>
+                        <option value="Печать" {% if operation.processing == 'Печать' %}selected{% endif %}>Печать</option>
+                        <option value="Резка" {% if operation.processing == 'Резка' %}selected{% endif %}>Резка</option>
+                        <option value="Стандарт" {% if operation.processing == 'Стандарт' %}selected{% endif %}>Стандарт</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Цена</label>
+                    <input type="number" name="amount" step="0.01" value="{{ operation.amount }}" required>
+                </div>
+
+                <div class="form-btn">
+                    <button type="submit" class="btn btn-action">
+                        Сохранить
+                    </button>
+                </div>
+
             </form>
+
+            <div class="form-btn" style="margin-top: 0.5rem;">
+                <form action="{{ url_for('operation_delete', id=operation.id_operations) }}" method="POST">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Вы уверены, что хотите удалить эту операцию?');">
+                        Удалить
+                    </button>
+                </form>
+            </div>
+
         </div>
-        
     </div>
     
-    
-    
-    
-
 </body>
 
 </html>
