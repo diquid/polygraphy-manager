@@ -256,3 +256,12 @@ tr:nth-child(even) {
     display: flex;
     justify-content: center;
 }
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 1000px;
+    border: 2px solid #8D8D8D;
+    background: white;
+    outline: none;
+}
