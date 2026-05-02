@@ -1709,9 +1709,12 @@ def calculation():
 #вывод заказов со статусом проверен
 @app.route('/verified')
 def verified():
-    #фильтрация заказов по статусу и родительскому элементу
     session = db.session
-    results = (
+
+    search_query = request.args.get('q', '')
+    sort = request.args.get('sort', 'id_desc')
+
+    query = (
         session.query(
             Order.id_order,
             Order.status,
@@ -1723,16 +1726,41 @@ def verified():
             Employee.patronymic,
             Employee.position_employee
         )
-        .outerjoin(Employee, Order.id_employee == Employee.id_employee)  # Получение информации о сотруднике
-        .filter(Order.id_parent_operation == 0, Order.status == 'проверен')  # Получение всех заказов с родительским ID 0
-        .all()
+        .outerjoin(Employee, Order.id_employee == Employee.id_employee)
+        .filter(
+            Order.id_parent_operation == 0,
+            Order.status == 'проверен'
+        )
     )
 
-    print(f"Количество заказов: {len(results)}")
-    print(f"Результаты запроса: {results}")
-    
+    # 🔍 Поиск
+    if search_query:
+        query = query.filter(Order.name_orders.ilike(f"%{search_query}%"))
+
+    # 🔽 Сортировка
+    if sort == 'id_desc':
+        query = query.order_by(Order.id_order.desc())
+    elif sort == 'id_asc':
+        query = query.order_by(Order.id_order.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Order.order_date.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Order.order_date.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(Order.name_orders.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Order.name_orders.desc())
+
+    results = query.all()
+
     session.close()
-    return render_template('verified.html', results=results)
+
+    return render_template(
+        'verified.html',
+        results=results,
+        search_query=search_query,
+        sort=sort
+    )
 
 @app.route('/tree/<int:order_id>')  # Определение маршрута для отображения дерева заказов по ID заказа
 def tree(order_id):
