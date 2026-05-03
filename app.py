@@ -1624,9 +1624,15 @@ def template():
 #вывод заказов со статусом на удаление
 @app.route('/delete')
 def delete():
-    #фильтрация заказов по статусу и родительскому элементу
+    if not current_user.is_authenticated:
+        abort(403)
+
+    sort = request.args.get('sort', 'id_desc')
+    search_query = request.args.get('q', '')
+
     session = db.session
-    results = (
+
+    query = (
         session.query(
             Order.id_order,
             Order.status,
@@ -1638,16 +1644,36 @@ def delete():
             Employee.patronymic,
             Employee.position_employee
         )
-        .outerjoin(Employee, Order.id_employee == Employee.id_employee)  # Получение информации о сотруднике
-        .filter(Order.id_parent_operation == 0, Order.status == 'удалить')  # Получение всех заказов с родительским ID 0
-        .all()
+        .outerjoin(Employee, Order.id_employee == Employee.id_employee)
+        .filter(Order.id_parent_operation == 0, Order.status == 'удалить')
     )
 
-    print(f"Количество заказов: {len(results)}")
-    print(f"Результаты запроса: {results}")
-    
-    session.close()
-    return render_template('delete.html', results=results)
+    # 🔍 Поиск
+    if search_query:
+        query = query.filter(Order.name_orders.ilike(f"%{search_query}%"))
+
+    # 🔽 Сортировка
+    if sort == 'id_asc':
+        query = query.order_by(Order.id_order.asc())
+    elif sort == 'id_desc':
+        query = query.order_by(Order.id_order.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Order.order_date.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Order.order_date.desc())
+    elif sort == 'name_asc':
+        query = query.order_by(Order.name_orders.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Order.name_orders.desc())
+
+    results = query.all()
+
+    return render_template(
+        'delete.html',
+        results=results,
+        sort=sort,
+        search_query=search_query
+    )
 
 #вывод заказов со статусом расчет
 @app.route('/calculation')
