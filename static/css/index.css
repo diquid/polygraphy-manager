@@ -12,7 +12,7 @@ body {
 }
 
 .navbar {
-  --bs-navbar-padding-y: 2rem;
+  margin-bottom: 2rem;
 }
 
 h2 {
@@ -194,7 +194,6 @@ th {
 
 .button-group-left {
   text-align: left;
-  margin-bottom: 20px;
 }
 
 tr:nth-child(even) {
@@ -260,6 +259,57 @@ tr:nth-child(even) {
 .form-input {
     width: 100%;
     padding: 12px;
+    border-radius: 1000px;
+    border: 2px solid #8D8D8D;
+    background: white;
+    outline: none;
+}
+
+.order-wrapper {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Левая карточка */
+.order-info-card {
+    width: 300px;
+    background: #F8F8F8;
+    padding: 1.2rem;
+    border-radius: 40px;
+}
+
+/* Правая карточка */
+.order-edit-card {
+    flex: 1;
+    background: #F8F8F8;
+    padding: 1.5rem;
+    border-radius: 40px;
+}
+
+/* Блок формы */
+.form-row {
+    margin-bottom: 1.5rem;
+}
+
+/* Заголовки */
+.form-row label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4E4E4E;
+}
+
+/* Строка с инпутами */
+.row-inline {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+}
+
+/* Инпуты и селекты */
+.row-inline input,
+.row-inline select {
+    padding: 10px 12px;
     border-radius: 1000px;
     border: 2px solid #8D8D8D;
     background: white;
