@@ -7,6 +7,10 @@ body {
   font-variant-numeric: lining-nums;
 }
 
+.alert {
+  border-radius: 1000px;
+}
+
 .text-blue {
   color: blue;
 }
@@ -314,4 +318,137 @@ tr:nth-child(even) {
     border: 2px solid #8D8D8D;
     background: white;
     outline: none;
+}
+
+.tree-layout {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+/* Левая карточка */
+
+.tree-card {
+    width: 38%;
+    background: #F8F8F8;
+    border-radius: 40px;
+    padding: 1rem;
+    min-height: 780px;
+}
+
+.tree-content {
+    overflow: auto;
+    height: 100%;
+    max-height: 740px;
+    white-space: nowrap;
+}
+
+/* Правая колонка */
+
+.tree-right-column {
+    width: 62%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Верхняя панель */
+
+.control-card {
+    background: #F8F8F8;
+    border-radius: 40px;
+    padding: 1.2rem;
+}
+
+.cost-form {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.control-input {
+    padding: 0.8rem 1rem;
+    border-radius: 1000px;
+    border: 2px solid #B5B5B5;
+    background: white;
+    outline: none;
+    min-width: 180px;
+}
+
+.cost-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cost-label {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #4E4E4E;
+}
+
+.cost-input {
+    width: 140px;
+}
+
+/* Материалы */
+
+.materials-card {
+    background: #F8F8F8;
+    border-radius: 40px;
+    padding: 1rem;
+    min-height: 500px;
+}
+
+.materials-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.materials-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.add-button {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: #7E55FF;
+    color: white;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.add-button:hover {
+    background: #9E80FF;
+}
+
+.materials-content {
+    background: #FCFCFC;
+    border-radius: 30px;
+    min-height: 400px;
+    padding: 1rem;
+    overflow: auto;
+}
+
+/* Дерево */
+
+.tree-padding {
+    padding: 10px;
+}
+
+.tree-padding ul {
+    padding-left: 2rem;
+}
+
+.tree-padding li {
+    margin: 1rem 0;
 }

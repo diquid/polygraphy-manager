@@ -1788,40 +1788,75 @@ def verified():
         sort=sort
     )
 
-@app.route('/tree/<int:order_id>')  # Определение маршрута для отображения дерева заказов по ID заказа
+@app.route('/tree/<int:order_id>')
 def tree(order_id):
-    conn = psycopg2.connect("dbname=Printing user=postgres password=1234")  # Установка соединения с базой данных
-    cur = conn.cursor()  # Создание курсора для выполнения запросов
-    operations = Operation.query.all()  # Получаем все операции из базы данных
-    orders = get_orders(order_id)  # Получаем заказы по заданному ID
-    tree = build_tree(orders)  # Строим дерево заказов на основе полученных данных
-    circulation = get_circulation(order_id)  # Получаем тираж для заказа
-    get_total_cost(order_id)  # Получаем общую стоимость заказа
-    material_cost = 0  # Инициализация переменной для стоимости материалов
-    operation_cost = 0  # Инициализация переменной для стоимости операций
-    # material_cost = calculate_order_amount_material(cur, order_id)  # Расчет стоимости материалов (закомментировано)
-    # operation_cost = calculate_order_amount_operation(cur, order_id)  # Расчет стоимости операций (закомментировано)
-    total_cost = 0  # Инициализация общей стоимости
-    total_cost = float(calculate_order_amount(cur, order_id))  # Расчет общей стоимости заказа   
-    html_materials = render_materials(order_id) 
-    # Запрос для получения статуса заказа по его ID
+    conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
+    cur = conn.cursor()
+
+    operations = Operation.query.all()
+
+    order = Order.query.filter_by(
+        id_order=order_id,
+        id_parent_operation=0
+    ).first()
+
+    if not order:
+        abort(404)
+
+    orders = get_orders(order_id)
+    tree = build_tree(orders)
+
+    circulation = get_circulation(order_id)
+
+    get_total_cost(order_id)
+
+    material_cost = 0
+    operation_cost = 0
+
+    total_cost = float(calculate_order_amount(cur, order_id))
+
+    html_materials = render_materials(order_id)
+
     cur.execute("""
         SELECT status
         FROM orders
         WHERE id_order = %s AND id_parent_operation = 0
-    """, (order_id,))  
-    status = cur.fetchone()  # Получаем статус заказа
-    # Проверка статуса заказа
+    """, (order_id,))
+
+    status = cur.fetchone()
+
     if (status[0] == 'расчет' or status[0] == 'на удаление'):
-        # Отрисовываем дерево для статуса "расчет"
-        tree_html = render_tree(order_id, tree, operations)  
-        return render_template('tree_calculation.html', status=status[0], operations=operations, tree_html=tree_html, order_id=order_id, 
-                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost, html_materials=html_materials)
+        tree_html = render_tree(order_id, tree, operations)
+
+        return render_template(
+            'tree_calculation.html',
+            status=status[0],
+            operations=operations,
+            tree_html=tree_html,
+            order_id=order_id,
+            order=order,  # ✅ ВОТ ЭТО ДОБАВИЛИ
+            total_cost=total_cost,
+            circulation=circulation,
+            material_cost=material_cost,
+            operation_cost=operation_cost,
+            html_materials=html_materials
+        )
     else:
-        # Отрисовываем проверенное дерево для других статусов
-        tree_html = render_tree_verified(order_id, tree, operations)  
-        return render_template('tree.html', status=status[0], operations=operations, tree_html=tree_html, order_id=order_id, 
-                               total_cost=total_cost, circulation=circulation, material_cost=material_cost, operation_cost=operation_cost, html_materials=html_materials)
+        tree_html = render_tree_verified(order_id, tree, operations)
+
+        return render_template(
+            'tree.html',
+            status=status[0],
+            operations=operations,
+            tree_html=tree_html,
+            order_id=order_id,
+            order=order,  # ✅ И ЗДЕСЬ ТОЖЕ
+            total_cost=total_cost,
+            circulation=circulation,
+            material_cost=material_cost,
+            operation_cost=operation_cost,
+            html_materials=html_materials
+        )
 
 #создание нового заказа
 @app.route('/new_order')
@@ -2700,43 +2735,86 @@ def update_status_delete():
     return order_details_delete(id_order)
 
 @app.route('/calculate_cost/<int:order_id>', methods=['GET', 'POST'])
-def calculate_cost(order_id):  
+def calculate_cost(order_id):
+
     if request.method == 'POST':
+
         circulation = request.form.get('circulation', type=int)
+
         if circulation is None:
             print("Ошибка: Тираж не был введен.")
-            return render_template('tree.html', order_id=order_id, total_cost=total_cost)
+            return render_template(
+                'tree.html',
+                order_id=order_id,
+                total_cost=0
+            )
+
         conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
         cur = conn.cursor()
-        material_cost=0
-        # material_cost = calculate_order_amount_material(cur, order_id)
-        print(material_cost)
-        operation_cost=0
-        # operation_cost = calculate_order_amount_operation(cur, order_id)
-        print(operation_cost)
-               
-        update_order(cur, order_id, circulation)#обновить заказ
-        total_cost = calculate_order_amount(cur, order_id)#расчет стоимости заказа
-        
+
+        material_cost = 0
+        operation_cost = 0
+
+        update_order(cur, order_id, circulation)
+
+        total_cost = calculate_order_amount(cur, order_id)
+
         cur.execute("""
             UPDATE orders
             SET amount = %s, circulation = %s
-            WHERE id_order = %s AND id_parent_operation = 0
+            WHERE id_order = %s
+            AND id_parent_operation = 0
         """, (total_cost, circulation, order_id))
-        
+
         print('cумма заказа обновлена')
         print(f'amount {total_cost}')
+
         conn.commit()
+
         print(f"Заказ {order_id} обновлен успешно.")
-        status='расчет'
-        operations = Operation.query.all()  # Получаем все операции
-        orders = get_orders(order_id)   # Получаем заказы
-        tree = build_tree(orders)       # Строим дерево
-        tree_html = render_tree(order_id, tree, operations)  # Отрисовываем дерево
-        total_cost = get_total_cost(order_id) #стоимость    
-        circulation = get_circulation(order_id) #тираж
-        return render_template('tree.html', status = status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost, 
-                            circulation=circulation, material_cost=material_cost,operation_cost=operation_cost)
+
+        status = 'расчет'
+
+        operations = Operation.query.all()
+
+        orders = get_orders(order_id)
+
+        tree = build_tree(orders)
+
+        tree_html = render_tree(order_id, tree, operations)
+
+        total_cost = get_total_cost(order_id)
+
+        circulation = get_circulation(order_id)
+
+        # ДОБАВИТЬ ↓↓↓
+
+        order = Order.query.filter_by(
+            id_order=order_id,
+            id_parent_operation=0
+        ).first()
+
+        html_materials = render_materials(order_id)
+
+        # ↑↑↑
+
+        return render_template(
+            'tree.html',
+            status=status,
+            operations=operations,
+            tree_html=tree_html,
+            order_id=order_id,
+
+            # ДОБАВИТЬ ↓↓↓
+            order=order,
+            html_materials=html_materials,
+            # ↑↑↑
+
+            total_cost=total_cost,
+            circulation=circulation,
+            material_cost=material_cost,
+            operation_cost=operation_cost
+        )
     
 @app.route('/copy_order_route', methods=['POST'])
 def copy_order_route():
