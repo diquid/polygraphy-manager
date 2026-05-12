@@ -70,11 +70,17 @@
                 Создание номенклатуры
             </div>
 
-            <form method="POST" action="{{ url_for('new_nomenclature_orders_add') }}">
+            <form method="POST" action="{{ url_for('new_nomenclature_orders_add') }}" enctype="multipart/form-data">
 
                 <div class="form-field">
                     <label>Название номенклатуры</label>
                     <input type="text" name="name" required>
+                </div>
+
+                <div class="form-field">
+                    <label>Изображение</label>
+                    <input type="file" name="image" accept="image/*">
+                    <img id="preview" style="max-width:150px; display:none; margin-top:10px;">
                 </div>
 
                 <div class="form-btn">
@@ -87,6 +93,18 @@
 
         </div>
     </div>
+
+    <script>
+    document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('preview');
+
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+        }
+    });
+    </script>
     
 </body>
 

@@ -70,13 +70,44 @@
                 Изменение номенклатуры
             </div>
 
-            <form method="POST" action="{{ url_for('nomenclature_orders_update') }}">
+            <form method="POST"
+                action="{{ url_for('nomenclature_orders_update') }}"
+                enctype="multipart/form-data">
 
-                <input type="hidden" name="id_nomenclature_orders" value="{{ parameter.id_nomenclature_orders }}">
+                <input type="hidden"
+                    name="id_nomenclature_orders"
+                    value="{{ parameter.id_nomenclature_orders }}">
 
                 <div class="form-field">
                     <label>Название номенклатуры</label>
-                    <input type="text" name="name_nomenclature_orders" value="{{ parameter.name_nomenclature_orders }}" required>
+
+                    <input type="text"
+                        name="name_nomenclature_orders"
+                        value="{{ parameter.name_nomenclature_orders }}"
+                        required>
+                </div>
+
+                <!-- ТЕКУЩЕЕ ИЗОБРАЖЕНИЕ -->
+                {% if parameter.image_filename %}
+                <div class="form-field">
+                    <label>Текущее изображение</label>
+
+                    <div>
+                        <img src="{{ url_for('static',
+                                filename='uploads/nomenclature/' + parameter.image_filename) }}"
+                            width="200"
+                            style="border-radius:10px; margin-top:10px;">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- НОВОЕ ИЗОБРАЖЕНИЕ -->
+                <div class="form-field">
+                    <label>Изменить изображение</label>
+
+                    <input type="file"
+                        name="image"
+                        accept="image/*">
                 </div>
 
                 <div class="form-btn">

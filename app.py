@@ -15,8 +15,8 @@ from wtforms.validators import DataRequired
 from flask import abort
 from flask import Flask, send_file, render_template
 from flask import request, render_template
-
-
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -26,6 +26,11 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+UPLOAD_FOLDER = 'static/uploads/nomenclature'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 class Materials(db.Model):
     __tablename__ = 'materials'    
@@ -146,6 +151,7 @@ class NomenclatureOrders(db.Model):
     __tablename__ = 'nomenclature_orders'
     id_nomenclature_orders = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name_nomenclature_orders = db.Column(db.String)
+    image_filename = db.Column(db.String(255), nullable=True)
     
 class NomenclatureParameters(db.Model):
     __tablename__ = 'nomenclature_parameters'
@@ -1790,11 +1796,13 @@ def verified():
 
 @app.route('/tree/<int:order_id>')
 def tree(order_id):
+
     conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
     cur = conn.cursor()
 
     operations = Operation.query.all()
 
+    # Главный заказ
     order = Order.query.filter_by(
         id_order=order_id,
         id_parent_operation=0
@@ -1803,7 +1811,18 @@ def tree(order_id):
     if not order:
         abort(404)
 
+    # =====================================================
+    # ПОЛУЧЕНИЕ НОМЕНКЛАТУРЫ С ИЗОБРАЖЕНИЕМ
+    # =====================================================
+
+    nomenclature = NomenclatureOrders.query.filter_by(
+        id_nomenclature_orders=order.id_nomenclature_orders
+    ).first()
+
+    # =====================================================
+
     orders = get_orders(order_id)
+
     tree = build_tree(orders)
 
     circulation = get_circulation(order_id)
@@ -1820,41 +1839,79 @@ def tree(order_id):
     cur.execute("""
         SELECT status
         FROM orders
-        WHERE id_order = %s AND id_parent_operation = 0
+        WHERE id_order = %s
+        AND id_parent_operation = 0
     """, (order_id,))
 
     status = cur.fetchone()
 
-    if (status[0] == 'расчет' or status[0] == 'на удаление'):
+    # =====================================================
+    # ЕСЛИ ЗАКАЗ В РАСЧЕТЕ
+    # =====================================================
+
+    if status[0] == 'расчет' or status[0] == 'на удаление':
+
         tree_html = render_tree(order_id, tree, operations)
 
         return render_template(
             'tree_calculation.html',
+
             status=status[0],
+
             operations=operations,
+
             tree_html=tree_html,
+
             order_id=order_id,
-            order=order,  # ✅ ВОТ ЭТО ДОБАВИЛИ
+
+            order=order,
+
+            # 👇 ДОБАВИЛИ НОМЕНКЛАТУРУ
+            nomenclature=nomenclature,
+
             total_cost=total_cost,
+
             circulation=circulation,
+
             material_cost=material_cost,
+
             operation_cost=operation_cost,
+
             html_materials=html_materials
         )
+
+    # =====================================================
+    # ЕСЛИ ЗАКАЗ ПОДТВЕРЖДЕН
+    # =====================================================
+
     else:
+
         tree_html = render_tree_verified(order_id, tree, operations)
 
         return render_template(
             'tree.html',
+
             status=status[0],
+
             operations=operations,
+
             tree_html=tree_html,
+
             order_id=order_id,
-            order=order,  # ✅ И ЗДЕСЬ ТОЖЕ
+
+            order=order,
+
+            # 👇 И ТУТ ТОЖЕ
+            nomenclature=nomenclature,
+
             total_cost=total_cost,
+
             circulation=circulation,
+
             material_cost=material_cost,
+
             operation_cost=operation_cost,
+
             html_materials=html_materials
         )
 
@@ -1907,7 +1964,31 @@ def new_order_add():
     material_cost = 0
     operation_cost = 0    
     # Отображение страницы с деревом заказа и его деталями
-    return render_template('tree_calculation.html', operations=operations, tree_html=tree_html, order_id=new_order_id, total_cost=total_cost, material_cost=material_cost, operation_cost=operation_cost)
+    order = Order.query.filter_by(
+        id_order=new_order_id,
+        id_parent_operation=0
+    ).first()
+
+    nomenclature = NomenclatureOrders.query.filter_by(
+        id_nomenclature_orders=order.id_nomenclature_orders
+    ).first()
+
+    return render_template(
+        'tree_calculation.html',
+
+        operations=operations,
+        tree_html=tree_html,
+
+        order_id=new_order_id,
+
+        order=order,
+
+        nomenclature=nomenclature,
+
+        total_cost=total_cost,
+        material_cost=material_cost,
+        operation_cost=operation_cost
+    )
 
 
 # Получение информации об операции
@@ -2065,9 +2146,17 @@ def add_operation_new():
     else:
         status = 0  # Установка статуса по умолчанию
         circulation = 0  # Установка тиража по умолчанию
+
+    order = Order.query.filter_by(id_order=order_id, id_parent_operation=0).first()
+    nomenclature = NomenclatureOrders.query.filter_by(
+        id_nomenclature_orders=order.id_nomenclature_orders
+    ).first() if order else None
+    html_materials = render_materials(order_id)
+
     # Отображение страницы с деревом заказа и его деталями
-    return render_template('tree_calculation.html', status=status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost, 
-                           circulation=circulation, material_cost=material_cost, operation_cost=operation_cost)
+    return render_template('tree_calculation.html', status=status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost,
+                           circulation=circulation, material_cost=material_cost, operation_cost=operation_cost,
+                           order=order, nomenclature=nomenclature, html_materials=html_materials)
 
 #удаление заказа
 @app.route('/delete_orders', methods=['POST'])
@@ -2137,7 +2226,19 @@ def delete_operation():
             total_cost = 0
             material_cost = 0
             operation_cost = 0
-            return render_template('tree_calculation.html', operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost,material_cost=material_cost,operation_cost=operation_cost)
+            order = Order.query.filter_by(id_order=order_id, id_parent_operation=0).first()
+            nomenclature = NomenclatureOrders.query.filter_by(
+                id_nomenclature_orders=order.id_nomenclature_orders
+            ).first() if order else None
+            html_materials = render_materials(order_id)
+            cur.execute("SELECT status, circulation FROM orders WHERE id_order = %s AND id_parent_operation = 0", (order_id,))
+            row = cur.fetchone()
+            status = row[0] if row else 'расчет'
+            circulation = row[1] if row else 0
+            return render_template('tree_calculation.html', status=status, operations=operations, tree_html=tree_html,
+                                   order_id=order_id, total_cost=total_cost, material_cost=material_cost,
+                                   operation_cost=operation_cost, order=order, nomenclature=nomenclature,
+                                   html_materials=html_materials, circulation=circulation)
     except Exception as e:
         conn.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
@@ -2743,13 +2844,12 @@ def calculate_cost(order_id):
 
         if circulation is None:
             print("Ошибка: Тираж не был введен.")
-            return render_template(
-                'tree.html',
-                order_id=order_id,
-                total_cost=0
-            )
+            return redirect(url_for('tree', order_id=order_id))
 
-        conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
+        conn = psycopg2.connect(
+            "dbname=Printing user=postgres password=1234"
+        )
+
         cur = conn.cursor()
 
         material_cost = 0
@@ -2761,9 +2861,10 @@ def calculate_cost(order_id):
 
         cur.execute("""
             UPDATE orders
-            SET amount = %s, circulation = %s
+            SET amount = %s,
+                circulation = %s
             WHERE id_order = %s
-            AND id_parent_operation = 0
+              AND id_parent_operation = 0
         """, (total_cost, circulation, order_id))
 
         print('cумма заказа обновлена')
@@ -2777,6 +2878,15 @@ def calculate_cost(order_id):
 
         operations = Operation.query.all()
 
+        order = Order.query.filter_by(
+            id_order=order_id,
+            id_parent_operation=0
+        ).first()
+
+        nomenclature = NomenclatureOrders.query.filter_by(
+            id_nomenclature_orders=order.id_nomenclature_orders
+        ).first()
+
         orders = get_orders(order_id)
 
         tree = build_tree(orders)
@@ -2787,16 +2897,7 @@ def calculate_cost(order_id):
 
         circulation = get_circulation(order_id)
 
-        # ДОБАВИТЬ ↓↓↓
-
-        order = Order.query.filter_by(
-            id_order=order_id,
-            id_parent_operation=0
-        ).first()
-
         html_materials = render_materials(order_id)
-
-        # ↑↑↑
 
         return render_template(
             'tree.html',
@@ -2804,17 +2905,16 @@ def calculate_cost(order_id):
             operations=operations,
             tree_html=tree_html,
             order_id=order_id,
-
-            # ДОБАВИТЬ ↓↓↓
             order=order,
-            html_materials=html_materials,
-            # ↑↑↑
-
+            nomenclature=nomenclature,
             total_cost=total_cost,
             circulation=circulation,
             material_cost=material_cost,
-            operation_cost=operation_cost
+            operation_cost=operation_cost,
+            html_materials=html_materials
         )
+
+    return redirect(url_for('tree', order_id=order_id))
     
 @app.route('/copy_order_route', methods=['POST'])
 def copy_order_route():
@@ -3067,6 +3167,9 @@ def nomenclature_orders_table():
         search_query=search_query
     )
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 #создание новой номенклатуры заказа
 @app.route('/new_nomenclature_orders')
 def new_nomenclature_orders():
@@ -3077,19 +3180,29 @@ def new_nomenclature_orders():
 @app.route('/new_nomenclature_orders_add', methods=['GET', 'POST'])
 def new_nomenclature_orders_add():
     if request.method == 'POST':
-        # Получение данных из формы
+
         name = request.form.get('name')
-        # Создание нового объекта номенклатуры
-        id_nomenclature_orders = get_new_nomenclature_orders()
-        new_nomenclature = NomenclatureOrders(id_nomenclature_orders=id_nomenclature_orders, name_nomenclature_orders=name)
-        # Сохранение в базе данных
+        file = request.files.get('image')
+
+        filename = None
+
+        if file and file.filename != '' and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # ❗ ВАЖНО: ID НЕ ПЕРЕДАЁМ ВРУЧНУЮ
+        new_nomenclature = NomenclatureOrders(
+            name_nomenclature_orders=name,
+            image_filename=filename
+        )
+
         db.session.add(new_nomenclature)
         db.session.commit()
 
         flash('Новая номенклатура успешно создана!', 'success')
         return redirect(url_for('new_nomenclature_orders'))
 
-    return render_template('new_nomenclature_orders.html')  # Отображение формы при GET-запросе
+    return render_template('new_nomenclature_orders.html')
 
 @app.route('/nomenclature_orders_edit/<int:id>', methods=['GET', 'POST'])
 def nomenclature_orders_edit(id):
@@ -3097,24 +3210,38 @@ def nomenclature_orders_edit(id):
     parameter = NomenclatureOrders.query.filter_by(id_nomenclature_orders = id).first()
     # Отображение страницы для создания нового заказа с переданными наименованиями
     return render_template("nomenclature_orders_edit.html", parameter=parameter) 
-@app.route('/nomenclature_orders_update', methods=['GET', 'POST'])
+@app.route('/nomenclature_orders_update', methods=['POST'])
 def nomenclature_orders_update():
-    if request.method == 'POST':
-        id_nomenclature_orders = request.form.get('id_nomenclature_orders')
-        name_nomenclature_orders = request.form.get('name_nomenclature_orders')
-        print(f"ID: {id_nomenclature_orders}, Name: {name_nomenclature_orders}")
-        conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE nomenclature_orders
-            SET name_nomenclature_orders = %s
-            WHERE id_nomenclature_orders = %s;
-            """, (name_nomenclature_orders, id_nomenclature_orders))
-        conn.commit()
-        flash('Данные номенклатуры обновлены', 'success')
-        return nomenclature_orders_table()
 
-    return nomenclature_orders_table()  # Отображение формы при GET-запросе
+    id_nomenclature_orders = request.form.get('id_nomenclature_orders')
+    name = request.form.get('name_nomenclature_orders')
+    file = request.files.get('image')
+
+    nomenclature = NomenclatureOrders.query.get(id_nomenclature_orders)
+
+    nomenclature.name_nomenclature_orders = name
+
+    if file and file.filename != '' and allowed_file(file.filename):
+
+        filename = secure_filename(file.filename)
+
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        old_file = nomenclature.image_filename
+
+        if old_file:
+            old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_file)
+
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        nomenclature.image_filename = filename
+
+    db.session.commit()
+
+    flash('Данные обновлены', 'success')
+
+    return nomenclature_orders_table()
 
 @app.route('/nomenclature_orders_delete/<int:id>', methods=['POST'])
 def nomenclature_orders_delete(id):
@@ -4113,5 +4240,3 @@ def generate_pdf(order_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-

@@ -362,9 +362,15 @@ tr:nth-child(even) {
 
 .cost-form {
     display: flex;
-    gap: 1rem;
+    flex-wrap: nowrap;
+    gap: 0.7rem;
     align-items: center;
     margin-bottom: 1rem;
+}
+
+.cost-form .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .control-input {
@@ -373,7 +379,8 @@ tr:nth-child(even) {
     border: 2px solid #B5B5B5;
     background: white;
     outline: none;
-    min-width: 180px;
+    min-width: 130px;
+    flex-shrink: 1;
 }
 
 .cost-row {
@@ -386,10 +393,24 @@ tr:nth-child(even) {
     font-size: 1.2rem;
     font-weight: 500;
     color: #4E4E4E;
+    white-space: nowrap;
 }
 
 .cost-input {
     width: 140px;
+}
+
+/* Ряд карточек (Материалы + Изображение) */
+
+.cards-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.cards-row .materials-card {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Материалы */
@@ -398,7 +419,7 @@ tr:nth-child(even) {
     background: #F8F8F8;
     border-radius: 40px;
     padding: 1rem;
-    min-height: 500px;
+    min-height: 340px;
 }
 
 .materials-header {
@@ -434,7 +455,7 @@ tr:nth-child(even) {
 .materials-content {
     background: #FCFCFC;
     border-radius: 30px;
-    min-height: 400px;
+    min-height: 260px;
     padding: 1rem;
     overflow: auto;
 }
