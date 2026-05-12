@@ -2093,11 +2093,17 @@ def add_operation():
     if order_data is not None:
        status, circulation = order_data
     else:
-        status =0
-        circulation=0 
+        status = 0
+        circulation = 0
 
-    return render_template('tree_calculation_add.html', status = status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost, 
-                           circulation=circulation, material_cost=material_cost,operation_cost=operation_cost, parent_id=parent_id, results1=results1)
+    order = Order.query.filter_by(id_order=order_id, id_parent_operation=0).first()
+    nomenclature = NomenclatureOrders.query.filter_by(
+        id_nomenclature_orders=order.id_nomenclature_orders
+    ).first() if order else None
+
+    return render_template('tree_calculation_add.html', status=status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost,
+                           circulation=circulation, material_cost=material_cost, operation_cost=operation_cost,
+                           parent_id=parent_id, results1=results1, order=order, nomenclature=nomenclature)
     
 # Добавление операции
 @app.route('/add_operation_new', methods=['POST'])
@@ -4084,152 +4090,54 @@ def generate_pdf(order_id):
     operation_cost = 0
     
     session = db.session
-    results1 = (
-    session.query(
-        Order.id_child_operation,        
-        Operation.name_operations,
-        Order.quantity_output,
-        Order.quantity_entrance,
-        Order.defective,
-        Operation.id_type_work,
-        NomenclatureParameters.name_parameters,        
-        ParametersOperation.value
-    )
-    .join(Operation, Order.id_child_operation == Operation.id_operations)
-    .join(ParametersOperation, Operation.id_operations == ParametersOperation.id_operations)
-    .join(NomenclatureParameters, NomenclatureParameters.id_nomenclature_parameters == ParametersOperation.id_nomenclature_parameters)
-    .filter(Order.id_order == order_id, Operation.id_type_work == 1) #препресс
-    .all()
-    )
 
-    print(f"Результаты запроса ДоПечать: {results1}")
-    
-    # Группируем результаты по id_child_operation
-    grouped_results_1 = {}
-    for operation in results1:
-        if operation.id_child_operation not in grouped_results_1:
-            grouped_results_1[operation.id_child_operation] = {
-                "name_operations": operation.name_operations,
-                "quantity_output": operation.quantity_output,
-                "quantity_entrance": operation.quantity_entrance,
-                "defective": operation.defective,
-                "parameters": []
-            }
-        grouped_results_1[operation.id_child_operation]["parameters"].append({
-            "name_parameters": operation.name_parameters,
-            "value": operation.value
-        }) 
-    
-    session = db.session
-    results2 = (
-    session.query(
-        Order.id_child_operation,        
-        Operation.name_operations,
-        Order.quantity_output,
-        Order.quantity_entrance,
-        Order.defective,
-        Operation.id_type_work,
-        NomenclatureParameters.name_parameters,        
-        ParametersOperation.value
-    )
-    .join(Operation, Order.id_child_operation == Operation.id_operations)
-    .join(ParametersOperation, Operation.id_operations == ParametersOperation.id_operations)
-    .join(NomenclatureParameters, NomenclatureParameters.id_nomenclature_parameters == ParametersOperation.id_nomenclature_parameters)
-    .filter(Order.id_order == order_id, Operation.id_type_work == 2) #послепечать
-    .all()
-    )
+    def query_by_type(type_work):
+        return (
+            session.query(
+                Order.id_child_operation,
+                Operation.name_operations,
+                Order.quantity_output,
+                Order.quantity_entrance,
+                Order.defective,
+                Operation.id_type_work,
+                NomenclatureParameters.name_parameters,
+                ParametersOperation.value
+            )
+            .join(Operation, Order.id_child_operation == Operation.id_operations)
+            .outerjoin(ParametersOperation, Operation.id_operations == ParametersOperation.id_operations)
+            .outerjoin(NomenclatureParameters, NomenclatureParameters.id_nomenclature_parameters == ParametersOperation.id_nomenclature_parameters)
+            .filter(Order.id_order == order_id, Operation.id_type_work == type_work)
+            .all()
+        )
 
-    print(f"Результаты запроса ДоПечать: {results2}")
-    
-    # Группируем результаты по id_child_operation
-    grouped_results_2 = {}
-    for operation in results2:
-        if operation.id_child_operation not in grouped_results_2:
-            grouped_results_2[operation.id_child_operation] = {
-                "name_operations": operation.name_operations,
-                "quantity_output": operation.quantity_output,
-                "quantity_entrance": operation.quantity_entrance,
-                "defective": operation.defective,
-                "parameters": []
-            }
-        grouped_results_2[operation.id_child_operation]["parameters"].append({
-            "name_parameters": operation.name_parameters,
-            "value": operation.value
-        }) 
-    
-    session = db.session
-    results3 = (
-    session.query(
-        Order.id_child_operation,        
-        Operation.name_operations,
-        Order.quantity_output,
-        Order.quantity_entrance,
-        Order.defective,
-        Operation.id_type_work,
-        NomenclatureParameters.name_parameters,        
-        ParametersOperation.value
-    )
-    .join(Operation, Order.id_child_operation == Operation.id_operations)
-    .join(ParametersOperation, Operation.id_operations == ParametersOperation.id_operations)
-    .join(NomenclatureParameters, NomenclatureParameters.id_nomenclature_parameters == ParametersOperation.id_nomenclature_parameters)
-    .filter(Order.id_order == order_id, Operation.id_type_work == 3) #допечать
-    .all()
-    )
+    def group_results(results):
+        grouped = {}
+        for op in results:
+            if op.id_child_operation not in grouped:
+                grouped[op.id_child_operation] = {
+                    "name_operations": op.name_operations,
+                    "quantity_output": op.quantity_output,
+                    "quantity_entrance": op.quantity_entrance,
+                    "defective": op.defective,
+                    "parameters": []
+                }
+            if op.name_parameters is not None:
+                grouped[op.id_child_operation]["parameters"].append({
+                    "name_parameters": op.name_parameters,
+                    "value": op.value
+                })
+        return grouped
 
-    print(f"Результаты запроса ДоПечать: {results3}")
-    
-    # Группируем результаты по id_child_operation
-    grouped_results_3 = {}
-    for operation in results3:
-        if operation.id_child_operation not in grouped_results_3:
-            grouped_results_3[operation.id_child_operation] = {
-                "name_operations": operation.name_operations,
-                "quantity_output": operation.quantity_output,
-                "quantity_entrance": operation.quantity_entrance,
-                "defective": operation.defective,
-                "parameters": []
-            }
-        grouped_results_3[operation.id_child_operation]["parameters"].append({
-            "name_parameters": operation.name_parameters,
-            "value": operation.value
-        })   
-        
-    session = db.session
-    results4 = (
-    session.query(
-        Order.id_child_operation,        
-        Operation.name_operations,
-        Order.quantity_output,
-        Order.quantity_entrance,
-        Order.defective,
-        Operation.id_type_work,
-        NomenclatureParameters.name_parameters,        
-        ParametersOperation.value
-    )
-    .join(Operation, Order.id_child_operation == Operation.id_operations)
-    .join(ParametersOperation, Operation.id_operations == ParametersOperation.id_operations)
-    .join(NomenclatureParameters, NomenclatureParameters.id_nomenclature_parameters == ParametersOperation.id_nomenclature_parameters)
-    .filter(Order.id_order == order_id, Operation.id_type_work == 4) #печать
-    .all()
-    )
+    results1 = query_by_type(1)  # Препресс
+    results2 = query_by_type(2)  # ПослеПечать
+    results3 = query_by_type(3)  # ДоПечать
+    results4 = query_by_type(4)  # Печать
 
-    print(f"Результаты запроса ДоПечать: {results4}")
-    
-    # Группируем результаты по id_child_operation
-    grouped_results_4 = {}
-    for operation in results4:
-        if operation.id_child_operation not in grouped_results_4:
-            grouped_results_4[operation.id_child_operation] = {
-                "name_operations": operation.name_operations,
-                "quantity_output": operation.quantity_output,
-                "quantity_entrance": operation.quantity_entrance,
-                "defective": operation.defective,
-                "parameters": []
-            }
-        grouped_results_4[operation.id_child_operation]["parameters"].append({
-            "name_parameters": operation.name_parameters,
-            "value": operation.value
-        })  
+    grouped_results_1 = group_results(results1)
+    grouped_results_2 = group_results(results2)
+    grouped_results_3 = group_results(results3)
+    grouped_results_4 = group_results(results4)
+
 
     tree_html = render_tree_pdf(order_id, tree, operations)  # Отрисовываем дерево 
       
