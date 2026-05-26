@@ -3622,6 +3622,12 @@ def nomenclature_parameters_delete(id):
     flash('Параметр успешно удален.', 'success')
     return nomenclature_parameters_table()
 
+@app.route('/instructions')
+def instructions():
+    if not current_user.is_authenticated:
+        abort(403)
+    return render_template("instructions.html")
+
 #таблица заказов
 @app.route('/orders_table', methods=['GET'])
 def orders_table():

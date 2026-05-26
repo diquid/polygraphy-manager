@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкции</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Переключить навигацию">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="row w-100">
+                    <div class="col-12 d-flex justify-content-between mb-2 hat">
+                        <div>
+                            <button onclick="window.location.href='/operation_table'" class="btn active">Справочники</button>
+                            <button onclick="window.location.href='/index'" class="btn btn-secondary">Журнал заказов</button>
+                        </div>
+                        <div>
+                            {% if current_user.is_authenticated %}
+                            <button onclick="window.location.href='/logout'" class="btn btn-danger">Выйти</button>
+                            {% else %}
+                            <button onclick="window.location.href='/login'" class="btn btn-action-secondary">Войти</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-start hat">
+                        <button onclick="window.location.href='/operation_table'" class="btn btn-secondary">Технологические операции</button>
+                        <button onclick="window.location.href='/material_table'" class="btn btn-secondary">Материалы</button>
+                        <button onclick="window.location.href='/nomenclature_orders_table'" class="btn btn-secondary">Номенклатура продукции</button>
+                        <button onclick="window.location.href='/employee_table'" class="btn btn-secondary">Сотрудники</button>
+                        <button onclick="window.location.href='/nomenclature_parameters_table'" class="btn btn-secondary">Параметры операций</button>
+                        <button onclick="window.location.href='/instructions'" class="btn active">Инструкции</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="instructions-wrapper">
+        <div class="page-title">Инструкции по работе с системой</div>
+
+        <!-- ══════════════════════════════════════
+             1. СОТРУДНИКИ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">1</span>
+                <span class="instr-title">Сотрудники</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Роли и права доступа
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>В системе есть два типа пользователей.</p>
+                        <p><strong>Менеджер</strong> работает с журналом заказов: создаёт заказы, меняет статусы, назначает клиентов, редактирует технологическую схему. Раздел «Справочники» ему недоступен — при попытке открыть его система вернёт ошибку доступа.</p>
+                        <p><strong>Администратор</strong> может всё то же самое, плюс имеет полный доступ к справочникам: технологические операции, материалы, номенклатура продукции, параметры операций и список сотрудников. Создавать и удалять сотрудников может только администратор.</p>
+                        <div class="instr-note">Чтобы открыть раздел, нажмите «Справочники» в верхней панели навигации, затем выберите «Сотрудники».</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание сотрудника
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Создать сотрудника» над таблицей. Заполните поля:</p>
+                        <ol>
+                            <li><strong>ID сотрудника</strong> — числовой идентификатор, который используется как логин при входе. Должен быть уникальным. Рекомендуется использовать табельные номера.</li>
+                            <li><strong>Фамилия, имя, отчество</strong> — фамилия и имя обязательны, отчество можно не заполнять.</li>
+                            <li><strong>Роль</strong> — менеджер или администратор. От выбора зависит доступ к разделам системы.</li>
+                            <li><strong>Пароль</strong> — хранится в зашифрованном виде. После сохранения восстановить его нельзя, только задать новый через редактирование. Передайте пароль сотруднику напрямую.</li>
+                        </ol>
+                        <p>После заполнения нажмите «Создать сотрудника» — новая запись появится в таблице.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Редактирование и удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Изменить» напротив нужной строки в таблице. Все поля доступны для редактирования, включая роль и пароль.</p>
+                        <div class="instr-note">Поле пароля при открытии формы пустое. Даже если меняете только другие данные — пароль всё равно нужно ввести заново. Система требует его при любом обновлении записи.</div>
+                        <p style="margin-top:0.7rem;">Кнопка «Удалить» находится на странице редактирования. Если к сотруднику привязаны заказы, удаление заблокируется. Сначала переназначьте менеджера во всех связанных заказах, затем повторите.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             2. ВХОД И ВЫХОД
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">2</span>
+                <span class="instr-title">Вход и выход из системы</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Вход в систему
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Кнопка «Войти» расположена в правом углу верхней панели на всех страницах системы.</p>
+                        <ol>
+                            <li>Нажмите «Войти» — откроется страница авторизации.</li>
+                            <li>В поле <strong>«Логин»</strong> введите числовой ID (не имя и не почта — именно цифровой идентификатор, который задал администратор при создании аккаунта).</li>
+                            <li>В поле <strong>«Пароль»</strong> введите пароль, выданный администратором.</li>
+                            <li>Нажмите «Войти» — система перенаправит вас в журнал заказов.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Выход из системы
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите красную кнопку «Выйти» в правом углу верхней панели. Система завершит сессию и покажет страницу подтверждения выхода. Оттуда можно сразу вернуться к форме входа, нажав «Войти снова».</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Возможные проблемы при входе
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <ol>
+                            <li><strong>В поле логина введено имя или фамилия</strong> — поле принимает только цифры, такой ввод сразу вызовет ошибку с пояснением.</li>
+                            <li><strong>ID верный, но сотрудник не найден</strong> — администратор ещё не создал аккаунт, либо введён неверный номер.</li>
+                            <li><strong>ID верный, но пароль неверный</strong> — восстановить пароль самостоятельно нельзя. Обратитесь к администратору: он откроет карточку сотрудника и задаст новый пароль через форму редактирования.</li>
+                        </ol>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             3. ТЕХНОЛОГИЧЕСКИЕ ОПЕРАЦИИ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">3</span>
+                <span class="instr-title">Технологические операции</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Что такое технологическая операция
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Технологическая операция — это отдельный этап производственного процесса: резка, печать, фотовывод, ламинация и т.д. Операции используются для построения технологических схем заказов — каждый узел дерева в схеме является одной операцией.</p>
+                        <p>Тип обработки операции влияет на расчёт количества: система по-разному считает количество листов на каждом этапе в зависимости от выбранного типа. Поэтому важно указывать его точно.</p>
+                        <div class="instr-note">Раздел доступен только администраторам. Перейдите в «Справочники» → «Технологические операции».</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание операции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Создать операцию» над таблицей. Заполните поля:</p>
+                        <ol>
+                            <li><strong>Название</strong> — например, «Офсетная печать» или «Резка на гильотине». Отображается в технологических схемах заказов, избегайте сокращений.</li>
+                            <li><strong>Тип работы</strong> — Препресс, ДоПечать, Печать или ПослеПечать. Определяет производственный этап и используется при группировке в PDF-документе.</li>
+                            <li><strong>Обработка</strong> — логика расчёта количества:
+                                <ul style="margin-top:0.4rem;">
+                                    <li><em>Стандарт</em> — количество считается по тиражу и проценту брака.</li>
+                                    <li><em>Печать</em> — учитывает цветность: количество прогонов зависит от числа красок.</li>
+                                    <li><em>Резка</em> — делит тираж на части по коэффициенту резки.</li>
+                                    <li><em>Фотовывод</em> — количество зависит только от числа цветов, не от тиража.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Цена</strong> — стоимость операции в рублях для расчёта итоговой суммы заказа.</li>
+                        </ol>
+                        <p>Нажмите «Создать операцию» — она появится в таблице и станет доступна в схемах заказов.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Редактирование и удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Изменить» напротив нужной строки, внесите изменения и нажмите «Изменить».</p>
+                        <div class="instr-note">Операции в справочнике и внутри заказов хранятся раздельно — при добавлении в заказ создаётся копия. Изменение записи в справочнике не затронет существующие заказы, только новые.</div>
+                        <p style="margin-top:0.7rem;">Кнопка «Удалить» находится на странице редактирования. Если операция привязана к активным заказам, удаление заблокируется — сначала уберите её из всех связанных заказов.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             4. МАТЕРИАЛЫ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">4</span>
+                <span class="instr-title">Материалы</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Что такое материал
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Материал — расходный ресурс, используемый при выполнении операции: бумага, плёнка, картон, краска и т.д. Каждый материал привязывается к конкретной операции внутри заказа.</p>
+                        <p>Когда менеджер открывает параметры операции в технологической схеме, он указывает, какой материал задействован и в каком количестве на единицу продукции. Система автоматически считает общий расход и включает его стоимость в итоговую сумму заказа.</p>
+                        <div class="instr-note">Раздел доступен только администраторам. Перейдите в «Справочники» → «Материалы».</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание материала
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Создать материал» над таблицей. Заполните поля:</p>
+                        <ol>
+                            <li><strong>Название</strong> — например, «Мелованная бумага 130 г/м²» или «Плёнка матовая». Чем конкретнее, тем удобнее менеджеру ориентироваться при выборе.</li>
+                            <li><strong>Цена</strong> — стоимость за единицу в рублях. Принимает дробные значения, разделитель — точка. Умножается на количество при расчёте стоимости заказа.</li>
+                        </ol>
+                        <p>Нажмите «Создать материал» — запись появится в таблице и станет доступна в схемах заказов.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Редактирование и удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Изменить» напротив нужной строки, внесите изменения и нажмите «Изменить».</p>
+                        <div class="instr-note">Изменение цены затронет только новые расчёты. Уже рассчитанные заказы хранят зафиксированную сумму — пересчёт произойдёт только при повторном запуске расчёта стоимости в конкретном заказе.</div>
+                        <p style="margin-top:0.7rem;">Кнопка «Удалить» на странице редактирования. Если материал используется в операциях — удаление заблокируется. Сначала уберите его из всех операций, затем удаляйте из справочника.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             5. НОМЕНКЛАТУРА ПРОДУКЦИИ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">5</span>
+                <span class="instr-title">Номенклатура продукции</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Что такое номенклатура продукции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Это список изделий, которые производит типография: визитки, буклеты, листовки, каталоги и т.д. Когда менеджер создаёт новый заказ, он выбирает изделие именно из этого списка — и его название становится названием заказа.</p>
+                        <p>К каждой позиции можно прикрепить изображение. Оно будет отображаться в технологической схеме заказа в блоке «Изображение» для визуальной сверки.</p>
+                        <div class="instr-note">Раздел доступен только администраторам. Перейдите в «Справочники» → «Номенклатура продукции».</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание позиции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Создать номенклатуру» над таблицей. Заполните поля:</p>
+                        <ol>
+                            <li><strong>Название</strong> — отображается в выпадающем списке при создании заказа, формулировка должна быть понятна менеджерам.</li>
+                            <li><strong>Изображение</strong> (необязательно) — загрузите фото или макет изделия в формате JPG, PNG или GIF. После выбора файла появится предварительный просмотр.</li>
+                        </ol>
+                        <p>Нажмите «Создать номенклатуру» — позиция появится в таблице.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Редактирование и удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Изменить» напротив нужной строки. Можно поменять название и заменить изображение. Если загрузить новый файл — старый автоматически удалится с сервера. Если оставить поле файла пустым — изображение останется прежним.</p>
+                        <p>Нажмите «Сохранить» для применения изменений.</p>
+                        <div class="instr-note">Кнопка «Удалить» заблокируется, если к позиции привязаны заказы. Сначала удалите или перепривяжите все связанные заказы.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             6. ПАРАМЕТРЫ ОПЕРАЦИЙ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">6</span>
+                <span class="instr-title">Параметры операций</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Что такое параметр операции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Параметр операции — характеристика, задаваемая для конкретной операции в заказе: цветность, процент брака, количество частей при резке и т.д.</p>
+                        <p>Справочник хранит только <strong>названия</strong> параметров без значений. Значения задаются отдельно для каждой операции в каждом заказе. Например, параметр «Цветность» — одна запись в справочнике, а значения в разных заказах могут быть «4+0» или «1+1».</p>
+                        <div class="instr-note">Параметры напрямую влияют на расчёт количества. Процент брака, цветность и количество частей при резке должны иметь точные названия из справочника — иначе система их не распознает и расчёт даст неверный результат.</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание параметра
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Создать параметр» над таблицей. В поле <strong>«Название параметра»</strong> введите однозначное название — оно будет отображаться в таблице параметров внутри операции заказа.</p>
+                        <p>Нажмите «Создать параметр» — запись появится в таблице и станет доступна для добавления к операциям в технологических схемах.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Редактирование и удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Изменить» напротив нужного параметра, измените текст и нажмите «Изменить».</p>
+                        <div class="instr-note">Переименование параметра обновит его отображение везде, где он уже добавлен к операциям — в базе хранится ссылка на запись, а не копия названия.</div>
+                        <p style="margin-top:0.7rem;">Кнопка «Удалить» на странице редактирования. Если параметр используется хотя бы в одной операции любого заказа — удаление заблокируется. Сначала удалите его из всех операций вручную.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             7. ЖУРНАЛ ЗАКАЗОВ
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">7</span>
+                <span class="instr-title">Журнал заказов</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Все заказы
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Стартовая страница журнала. Показывает заказы с любым статусом без фильтрации — удобно использовать как общий список для быстрого поиска, когда не помните текущий статус заказа.</p>
+                        <p>Таблица показывает: номер заказа, дату создания, ответственного менеджера, название изделия, статус и кнопку «Перейти». По нажатию система открывает страницу заказа в соответствии с его статусом.</p>
+                        <p>Над таблицей — строка поиска (по названию заказа) и сортировка по номеру, дате или алфавиту. Выбранная сортировка сохраняется в адресной строке.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Шаблон
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Заказы со статусом «шаблон». Шаблон — заготовка, которую можно многократно копировать. Удобно, когда типография регулярно выпускает один и тот же продукт: вместо того чтобы каждый раз строить дерево операций с нуля, менеджер копирует шаблон.</p>
+                        <p>В таблице две кнопки: <strong>«Перейти»</strong> открывает паспорт шаблона, <strong>«Скопировать»</strong> создаёт новый заказ со статусом «расчет» на основе этого шаблона и перенаправляет на паспорт нового заказа.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Расчет
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Заказы в активной работе. Статус «расчет» означает, что заказ оформляется: менеджер заполняет паспорт, строит технологическую схему, задаёт параметры операций и рассчитывает стоимость.</p>
+                        <p>По нажатию «Перейти» открывается паспорт в полном режиме редактирования. Из паспорта доступна технологическая схема с деревом операций. Отсюда заказ можно перевести в статус «проверен», «шаблон» или «на удаление».</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Проверка
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Заказы со статусом «проверен». Это финальная стадия: схема сформирована, стоимость рассчитана, данные проверены.</p>
+                        <p>Паспорт открывается только для чтения — редактировать поля и добавлять операции нельзя. Из паспорта можно вернуть заказ в расчёт или перевести в шаблон.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        На удаление
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Промежуточный статус перед окончательным удалением. Заказ остаётся в системе и виден здесь до тех пор, пока администратор не удалит его.</p>
+                        <p>Паспорт в этом разделе позволяет редактировать даты, менеджера и клиента. Кнопка <strong>«Удалить»</strong> доступна только здесь и только администраторам — после нажатия заказ исчезает полностью без возможности восстановления. Если удаление ошибочное, заказ можно вернуть в другой статус через кнопки в паспорте.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Создание нового заказа
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Новый» в меню журнала заказов. На странице — форма с одним полем: выпадающий список «Название заказа» с позициями из справочника номенклатуры.</p>
+                        <ol>
+                            <li>Выберите нужное изделие и нажмите «Создать заказ».</li>
+                            <li>Система автоматически создаёт заказ с уникальным номером и статусом «расчет», формирует начальную технологическую схему и открывает её.</li>
+                            <li>Дальше добавляйте нужные операции, задавайте параметры, привязывайте материалы.</li>
+                            <li>Паспортные данные, даты и ответственный менеджер заполняются на странице паспорта — перейдите туда через кнопку «Паспорт заказа» в верхнем меню.</li>
+                        </ol>
+                        <div class="instr-note">Если нужного изделия нет в списке — оно не заведено в справочнике номенклатуры. Обратитесь к администратору.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             8. ТЕХНОЛОГИЧЕСКАЯ СХЕМА
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">8</span>
+                <span class="instr-title">Технологическая схема заказа</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Структура страницы
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>На странице заказа в верхнем меню три вкладки: «Паспорт заказа», «Технологическая схема» и «Материалы заказа».</p>
+                        <p>Страница схемы делится на две части:</p>
+                        <ul>
+                            <li><strong>Слева</strong> — дерево операций. Каждый узел — одна операция с количеством на выходе и названием. Рядом с каждой — три кнопки: добавить дочернюю, удалить, открыть параметры.</li>
+                            <li><strong>Справа</strong> — панель управления: форма расчёта стоимости, блок материалов и изображение изделия из номенклатуры.</li>
+                        </ul>
+                        <div class="instr-note">Для заказов со статусом «расчет» дерево интерактивное. Для проверенных заказов — только просмотр параметров.</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Добавление и изменение операции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p><strong>Добавить операцию:</strong> нажмите кнопку добавления рядом с нужной операцией — справа откроется список операций из справочника с указанием типа работы. Выберите нужную и нажмите «Добавить операцию». Система создаёт копию и прикрепляет её как дочерний узел.</p>
+                        <p><strong>Изменить параметры:</strong> нажмите кнопку с прицелом рядом с операцией — справа откроется панель редактирования. Там можно менять расшифровку, параметры, материал и его количество.</p>
+                        <div class="instr-note">Удаление работает рекурсивно — если удалить операцию с дочерними, они все удалятся вместе с ней. Подтверждение не запрашивается, будьте внимательны.</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Привязка материала к операции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Откройте параметры нужной операции кнопкой с прицелом. В нижней части панели — блок «Материал» с двумя полями: выпадающий список материалов и поле количества.</p>
+                        <ol>
+                            <li>Выберите материал из списка.</li>
+                            <li>Укажите количество на единицу продукции.</li>
+                            <li>Нажмите «Сохранить изменения» — сводная таблица материалов обновится.</li>
+                        </ol>
+                        <div class="instr-note">К одной операции можно привязать только один материал. Чтобы заменить — выберите другой из списка и сохраните.</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Добавление параметров операции
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>В панели параметров операции — таблица уже добавленных параметров с их значениями и форма добавления нового: выпадающий список из справочника и кнопка «Добавить».</p>
+                        <ol>
+                            <li>Выберите параметр из списка и нажмите «Добавить» — он появится в таблице с пустым полем значения.</li>
+                            <li>Введите значение прямо в ячейку таблицы (цветность можно записать как «4+0», числа — цифрами).</li>
+                            <li>Нажмите «Сохранить изменения».</li>
+                        </ol>
+                        <div class="instr-note">Параметры, влияющие на расчёт количества (процент брака, цветность, количество частей при резке), должны иметь точные названия из справочника. Иначе система их не распознает.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             9. РАСЧЕТ И PDF
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">9</span>
+                <span class="instr-title">Расчет стоимости и генерация PDF</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Расчет стоимости
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Форма расчёта находится в правой части страницы технологической схемы, в верхней карточке. Поле для тиража, кнопка «Рассчитать стоимость» и поле итоговой суммы, которое заполняется автоматически.</p>
+                        <ol>
+                            <li>Введите тираж и нажмите «Рассчитать стоимость».</li>
+                            <li>Система обходит все операции дерева и для каждой считает количество на входе и выходе с учётом типа обработки, брака, цветности или коэффициента резки.</li>
+                            <li>Суммируются стоимости всех операций и материалов — итог появляется в поле «Стоимость» и сохраняется в паспорте заказа.</li>
+                            <li>Сводная таблица материалов тоже обновится с учётом нового тиража.</li>
+                        </ol>
+                        <div class="instr-note">Если какой-то элемент (цена операции, количество материала, параметр) не заполнен — система посчитает без него. Проверьте полноту данных перед расчётом.</div>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Генерация PDF
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Нажмите «Сгенерировать PDF» — откроется страница предварительного просмотра документа.</p>
+                        <p>В документ попадает: дерево заказа с количествами на каждой операции и четыре блока операций, сгруппированных по типу работы (Препресс, ДоПечать, Печать, ПослеПечать). Для каждой операции — количество на входе и выходе, брак и все заданные параметры с значениями.</p>
+                        <p>Чтобы распечатать или сохранить как PDF, нажмите «Печать страницы» в нижней части страницы — откроется стандартное диалоговое окно браузера. Кнопки навигации при печати скрываются автоматически.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             10. ПАСПОРТ ЗАКАЗА
+        ══════════════════════════════════════ -->
+        <div class="instr-card">
+            <button class="instr-header" onclick="toggleSection(this)">
+                <span class="instr-num">10</span>
+                <span class="instr-title">Паспорт заказа</span>
+                <svg class="instr-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="instr-body" style="display:none;">
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Структура паспорта
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Паспорт доступен из журнала заказов (кнопка «Перейти») и из технологической схемы (кнопка «Паспорт заказа» в верхнем меню).</p>
+                        <p>Страница состоит из двух карточек:</p>
+                        <ul>
+                            <li><strong>Левая</strong> — основные данные заказа: номер, название изделия, статус, тираж и рассчитанная сумма.</li>
+                            <li><strong>Правая</strong> — формы для заполнения деталей.</li>
+                        </ul>
+                        <p>Внизу страницы — кнопки смены статуса заказа.</p>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Заполнение полей
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Каждая форма сохраняется независимо — изменение одного поля не затрагивает остальные.</p>
+                        <ol>
+                            <li><strong>Дата и время создания</strong> — два поля рядом, сохраняются парой одним нажатием кнопки «Сохранить».</li>
+                            <li><strong>Дата и время готовности</strong> — работает так же. Это планируемая дата выдачи для контроля сроков.</li>
+                            <li><strong>Менеджер</strong> — выпадающий список всех сотрудников. Выберите ответственного и нажмите «Сохранить».</li>
+                            <li><strong>Клиент</strong> — выпадающий список клиентов. Каждая строка содержит ID, название, контакты и адрес. Выберите и нажмите «Сохранить».</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="instr-sub-card">
+                    <button class="instr-sub-header" onclick="toggleSub(this)">
+                        <svg class="instr-sub-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        Смена статуса заказа
+                    </button>
+                    <div class="instr-sub-body" style="display:none;">
+                        <p>Внизу страницы паспорта расположены кнопки: <strong>«В шаблон»</strong>, <strong>«Расчет»</strong>, <strong>«В проверку»</strong> и <strong>«На удаление»</strong>.</p>
+                        <p>Нажатие на любую из них немедленно меняет статус и перенаправляет на соответствующую версию паспорта.</p>
+                        <div class="instr-note">Для проверенных заказов паспорт открывается только для чтения — редактирование полей недоступно. Чтобы вернуться к редактированию, переведите заказ обратно в статус «расчет».</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /instructions-wrapper -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmCh1e5Tpk+9C0UVFoAkFpqe6dU"
+        crossorigin="anonymous"></script>
+
+    <script>
+        function toggleSection(btn) {
+            const body = btn.nextElementSibling;
+            const chevron = btn.querySelector('.instr-chevron');
+            const isOpen = body.style.display === 'block';
+            body.style.display = isOpen ? 'none' : 'block';
+            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function toggleSub(btn) {
+            const body = btn.nextElementSibling;
+            const chevron = btn.querySelector('.instr-sub-chevron');
+            const isOpen = body.style.display === 'block';
+            body.style.display = isOpen ? 'none' : 'block';
+            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+        }
+    </script>
+</body>
+
+</html>

@@ -10,7 +10,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 
-<body>
+<script src="{{ url_for('static', filename='js/help.js') }}"></script>
+
+<body data-help="employees">
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -37,16 +39,12 @@
                     </div>
 
                     <div class="col-12 d-flex justify-content-start hat">
-                        <button onclick="window.location.href='/operation_table'" class="btn btn-secondary">Технологические
-                            операции</button>
-                        <button onclick="window.location.href='/material_table'"
-                            class="btn btn-secondary">Материалы</button>
-                        <button onclick="window.location.href='/nomenclature_orders_table'"
-                            class="btn btn-secondary">Номенклатура продукции</button>
-                        <button onclick="window.location.href='/employee_table'"
-                            class="btn active">Сотрудники</button>
-                        <button onclick="window.location.href='/nomenclature_parameters_table'"
-                            class="btn btn-secondary">Параметры операций</button>
+                        <button onclick="window.location.href='/operation_table'" class="btn btn-secondary">Технологические операции</button>
+                        <button onclick="window.location.href='/material_table'" class="btn btn-secondary">Материалы</button>
+                        <button onclick="window.location.href='/nomenclature_orders_table'" class="btn btn-secondary">Номенклатура продукции</button>
+                        <button onclick="window.location.href='/employee_table'" class="btn active">Сотрудники</button>
+                        <button onclick="window.location.href='/nomenclature_parameters_table'" class="btn btn-secondary">Параметры операций</button>
+                        <button onclick="window.location.href='/instructions'" class="btn btn-secondary">Инструкции</button>
                     </div>
                 </div>
             </div>
