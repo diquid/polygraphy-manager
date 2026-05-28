@@ -329,43 +329,35 @@ def get_materials_for_operation(operation_id):
 #отрисовка дерева со статусом расчет
 def render_tree(order_id, tree, operations, parent=0, visited=None):
     if visited is None:
-        visited = set() # Инициализация множества для отслеживания посещенных узлов
+        visited = set()
     if parent in visited:
-        # Проверка на циклические ссылки в дереве
         raise RecursionError(f"Cyclic reference detected at parent: {parent}")
-    visited.add(parent) # Добавление текущего узла в посещенные
-    html = ""   
+    visited.add(parent)
+    html = ""
     if parent == 0:
-        # Получение названия заказа по его id
         order_name = get_order_name_by_id(order_id)
         html += f"<p class='order-info'>Название заказа: {order_name}</p>"
     if parent in tree:
-        html += "<ul class='tree'>" # Начало списка для отображения дерева
+        html += "<ul class='tree'>"
         for child in tree[parent]:
-            # Добавление информации о дочернем элементе
             html += f"<li><span class='caret'>{get_quantity_output_operations(child['id_child'], order_id)}шт - {get_name_operations(child['id_child'])} {get_decoding_operations(child['id_child'])}</span>"
-            # Форма для добавления новой операции
-            html += f"<form action='{url_for('add_operation')}' method='POST' class='inline-form'>"
-            # html += "<select name='operation_id' required class='operation-select'>"
-            # for operation in operations:
-            #     html += f"<option value='{operation.id_operations}'>ID: {operation.id_operations} - {operation.name_operations}</option>"
-            # html += "</select>"
-            html += f"<input type='hidden' name='order_id' value='{child['id_order']}'>"
-            html += f"<input type='hidden' name='parent_id' value='{child['id_child']}'>"
-            # Кнопка для добавления операции
-            html += """<button type="submit" class="btn btn-secondary btn-sm">
+
+            # Кнопка + — AJAX загрузка формы добавления дочерней операции
+            html += f"""<button type="button" class="btn btn-secondary btn-sm btn-add-op"
+                data-order-id="{child['id_order']}"
+                data-parent-id="{child['id_child']}"
+                onclick="loadAddOperationPanel(this)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"></path>
   <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"></path>
 </svg>
-              </button>"""
-            # Форма для удаления операции
-            html += "</form>"
+            </button>"""
+
+            # Форма удаления операции (остаётся как есть)
             html += f"<form action='{url_for('delete_operation')}' method='POST' class='inline-form'>"
             html += f"<input type='hidden' name='operation_id' value='{child['id_child']}'>"
             html += f"<input type='hidden' name='order_id' value='{child['id_order']}'>"
             html += f"<input type='hidden' name='parent_id' value='{parent}'>"
-            # Кнопка для удаления операции
             html += """<button type="submit" class="btn btn-secondary btn-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
@@ -373,66 +365,62 @@ def render_tree(order_id, tree, operations, parent=0, visited=None):
 </svg>
               </button>"""
             html += "</form>"
-            # Форма для получения информации об операции
-            html += "</form>"
-            html += f"<form action='{url_for('about_operation', operation_id=child['id_child'])}' method='POST' class='inline-form'>"
-            html += f"<input type='hidden' name='operation_id' value='{child['id_child']}'>"
-            html += f"<input type='hidden' name='order_id' value='{child['id_order']}'>"
-            html += f"<input type='hidden' name='parent_id' value='{parent}'>"
-            # Кнопка для получения информации об операции
-            html += """<button type="submit" class="btn btn-secondary btn-sm">
+
+            # Кнопка мишень — AJAX загрузка панели параметров операции
+            html += f"""<button type="button" class="btn btn-secondary btn-sm btn-target"
+                data-operation-id="{child['id_child']}"
+                data-order-id="{child['id_order']}"
+                data-parent-id="{parent}"
+                onclick="loadOperationPanel(this)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bullseye" viewBox="0 0 16 16">
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
   <path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10m0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
   <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/>
   <path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
 </svg>
-              </button>"""
-            html += "</form>"
-            # Рекурсивный вызов для отображения дочерних операций
+            </button>"""
+
             html += render_tree(order_id, tree, operations, child['id_child'], visited)
             html += "</li>"
-        html += "</ul>"    
-    return html # Возврат сгенерированного HTML-кода
+        html += "</ul>"
+    return html
 
-#отрисовка проверенного дерева для других статусов
+
 def render_tree_verified(order_id, tree, operations, parent=0, visited=None):
     if visited is None:
-        visited = set() # Инициализация множества для отслеживания посещенных узлов
+        visited = set()
     if parent in visited:
         raise RecursionError(f"Cyclic reference detected at parent: {parent}")
-    visited.add(parent) # Добавление текущего узла в посещенные
-    html = ""   
+    visited.add(parent)
+    html = ""
     if parent == 0:
-        # Получение названия заказа по его id
         order_name = get_order_name_by_id(order_id)
         html += f"<p> Название заказа: {order_name}</p>"
     if parent in tree:
-        html += "<ul>" # Начало списка для отображения дерева
+        html += "<ul>"
         for child in tree[parent]:
             print(f"child {child['id_child']}")
-            # Добавление информации о дочернем элементе
             html += f"<li><span class='caret'>{get_quantity_output_operations(child['id_child'], order_id)}шт - {get_name_operations(child['id_child'])} {get_decoding_operations(child['id_child'])}</span>"
-            # Форма для получения информации об операции
-            html += f"<form action='{url_for('about_operation', operation_id=child['id_child'])}' method='POST' class='inline-form'>"
-            html += f"<input type='hidden' name='operation_id' value='{child['id_child']}'>" # Скрытое поле с id операции
-            html += f"<input type='hidden' name='order_id' value='{child['id_order']}'>" # Скрытое поле с id заказа
-            html += f"<input type='hidden' name='parent_id' value='{parent}'>" # Скрытое поле с id родителя
-            # Кнопка для получения информации об операции
-            html += """<button type="submit" class="btn btn-secondary btn-sm">
+
+            # Кнопка мишень — AJAX (только просмотр, без + и -)
+            html += f"""<button type="button" class="btn btn-secondary btn-sm btn-target"
+                data-operation-id="{child['id_child']}"
+                data-order-id="{child['id_order']}"
+                data-parent-id="{parent}"
+                onclick="loadOperationPanel(this)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bullseye" viewBox="0 0 16 16">
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
   <path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10m0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
   <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/>
   <path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
 </svg>
-              </button>"""
-            html += "</form>"
-            # Рекурсивный вызов для отображения дочерних операций
+            </button>"""
+
             html += render_tree_verified(order_id, tree, operations, child['id_child'], visited)
             html += "</li>"
-        html += "</ul>"    
-    return html # Возврат сгенерированного HTML-кода
+        html += "</ul>"
+    return html
+
 
 def render_tree_pdf(order_id, tree, operations, parent=0, visited=None):
     if visited is None:
@@ -440,7 +428,7 @@ def render_tree_pdf(order_id, tree, operations, parent=0, visited=None):
     if parent in visited:
         raise RecursionError(f"Cyclic reference detected at parent: {parent}")
     visited.add(parent)
-    html = ""   
+    html = ""
     if parent == 0:
         order_name = get_order_name_by_id(order_id)
         html += f"<p>Название заказа: {order_name}</p>"
@@ -449,21 +437,18 @@ def render_tree_pdf(order_id, tree, operations, parent=0, visited=None):
         for child in tree[parent]:
             operation_id = child['id_child']
             html += f"<li><span class='caret'>{get_quantity_output_operations(operation_id, order_id)}шт - {get_name_operations(operation_id)} {get_decoding_operations(operation_id)}</span>"
-            # Получение и вывод материалов для текущей операции
             id_materials = get_materials_for_operation(operation_id)
-            if id_materials!=0:                
+            if id_materials != 0:
                 materials = get_materials_for_order(order_id)
                 if materials:
                     html += "<ul>"
                     for material in materials:
-                        print(f'id_materials {id_materials} material {material["id_materials"]}')
                         if id_materials == int(material['id_materials']):
-                            html += f"<li>{int(material['количество'])}шт - {material['name']}</li>"  # Предполагается, что 'name' и 'quantity' являются ключами в словаре материала
+                            html += f"<li>{int(material['количество'])}шт - {material['name']}</li>"
                     html += "</ul>"
-            
             html += render_tree_pdf(order_id, tree, operations, operation_id, visited)
             html += "</li>"
-        html += "</ul>"    
+        html += "</ul>"
     return html
 
 
@@ -2159,10 +2144,17 @@ def add_operation_new():
     ).first() if order else None
     html_materials = render_materials(order_id)
 
-    # Отображение страницы с деревом заказа и его деталями
-    return render_template('tree_calculation.html', status=status, operations=operations, tree_html=tree_html, order_id=order_id, total_cost=total_cost,
-                           circulation=circulation, material_cost=material_cost, operation_cost=operation_cost,
-                           order=order, nomenclature=nomenclature, html_materials=html_materials)
+    # Если AJAX-запрос — вернуть только обновлённое дерево
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return tree_html
+ 
+    # Обычный POST — вернуть полную страницу
+    return render_template('tree_calculation.html', status=status, operations=operations,
+                           tree_html=tree_html, order_id=order_id, total_cost=total_cost,
+                           circulation=circulation, material_cost=material_cost,
+                           operation_cost=operation_cost, order=order,
+                           nomenclature=nomenclature, html_materials=html_materials)
+
 
 #удаление заказа
 @app.route('/delete_orders', methods=['POST'])
@@ -2349,6 +2341,73 @@ def render_tree_about_operation(operation_id, order_id, tree, operations, parent
     return html # Возврат сгенерированного HTML-кода
 
 #параметры операции в дереве
+def render_operation_response(operation_id, parent_id, order_id):
+    """
+    Если запрос пришёл через AJAX (X-Requested-With: XMLHttpRequest),
+    возвращает только HTML-фрагмент operation_panel.html.
+    Иначе — полную страницу через about_operation().
+    """
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        session_db = db.session
+        results = (
+            session_db.query(
+                ParametersOperation.id_parameters,
+                ParametersOperation.id_operations,
+                ParametersOperation.id_nomenclature_parameters,
+                ParametersOperation.value,
+                NomenclatureParameters.id_nomenclature_parameters,
+                NomenclatureParameters.name_parameters
+            )
+            .join(NomenclatureParameters,
+                  ParametersOperation.id_nomenclature_parameters == NomenclatureParameters.id_nomenclature_parameters)
+            .filter(ParametersOperation.id_operations == operation_id)
+            .all()
+        )
+        operation_name        = Operation.query.filter_by(id_operations=operation_id).first()
+        materials             = Materials.query.all()
+        parameters_operations = NomenclatureParameters.query.all()
+        coeffcuttings         = CoeffCutting.query.all()
+
+        price_material  = None
+        price_operation = None
+
+        conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
+        cur  = conn.cursor()
+
+        if operation_name.id_materials is not None:
+            cur.execute("SELECT name, price FROM materials WHERE id_materials = %s",
+                        (operation_name.id_materials,))
+            result = cur.fetchone()
+            if result:
+                _, price = result
+                cur.execute("""SELECT quantity_output FROM orders
+                               WHERE id_order=%s AND id_parent_operation=%s AND id_child_operation=%s""",
+                            (order_id, parent_id, operation_id))
+                row = cur.fetchone()
+                kol = row[0] if row else 0
+                price_material = price * kol
+
+        cur.execute("SELECT amount FROM price_list WHERE id_price = %s", (operation_name.id_price,))
+        row = cur.fetchone()
+        price_operation = row[0] if row else None
+        conn.close()
+
+        return render_template('operation_panel.html',
+            operation_name=operation_name,
+            results=results,
+            order_id=order_id,
+            operation_id=operation_id,
+            parent_id=parent_id,
+            materials=materials,
+            parameters_operations=parameters_operations,
+            coeffcuttings=coeffcuttings,
+            price_material=price_material,
+            price_operation=price_operation
+        )
+
+    return render_operation_response(int(operation_id), parent_id, order_id)
+
+
 @app.route('/about_operation/<int:operation_id>', methods=['GET', 'POST'])
 def about_operation(operation_id, parent_id = None, order_id = None):
     print(f'ABOUT OPERATIONS')
@@ -2491,7 +2550,7 @@ def update_parameters(operation_id):
         db.session.rollback()  # Откат транзакции в случае ошибки
         flash(f'Ошибка при обновлении параметров: {str(e)}', 'danger')
 
-    return about_operation(operation_id, parent_id, order_id)  # Используем operation_id из URL
+    return render_operation_response(operation_id, parent_id, order_id)  # Используем operation_id из URL
 
 @app.route('/parameters_add', methods=['GET', 'POST'])
 def parameters_add():    
@@ -2523,7 +2582,7 @@ def parameters_add():
     print(f'operation_id {operation_id}')
     print(f'parent_id {parent_id}')
     print(f'order_id {order_id}')
-    return about_operation(int(operation_id), parent_id, order_id)
+    return render_operation_response(int(operation_id), parent_id, order_id)
 
 @app.route('/passport/<int:order_id>')
 def order_details(order_id):
@@ -3742,7 +3801,7 @@ def update_material():
     print(f'operation_id {operation_id}')
     print(f'parent_id {parent_id}')
     print(f'order_id {order_id}')
-    return about_operation(int(operation_id), parent_id, order_id)
+    return render_operation_response(int(operation_id), parent_id, order_id)
 
 #изменение кол-во в одной
 @app.route('/update_quantity_in_one', methods=['POST'])
@@ -3768,7 +3827,7 @@ def update_quantity_in_one():
     print(f'parent_id {parent_id}')
     print(f'order_id {order_id}')
     print(f'quantity_in_one {quantity_in_one}')
-    return about_operation(int(operation_id), parent_id, order_id)
+    return render_operation_response(int(operation_id), parent_id, order_id)
 
 #изменение цветности операции
 @app.route('/update_chroma', methods=['POST'])
@@ -4080,6 +4139,161 @@ def update_coeff_cutting():
         flash(f'Ошибка при обновлении коэффициента: {str(e)}', 'danger')
 
     return about_operation(operation_id, parent_id, order_id)
+
+
+@app.route('/operation_panel/<int:operation_id>', methods=['POST'])
+def operation_panel(operation_id):
+    order_id  = request.form.get('order_id')
+    parent_id = request.form.get('parent_id')
+ 
+    session_db = db.session
+    results = (
+        session_db.query(
+            ParametersOperation.id_parameters,
+            ParametersOperation.id_operations,
+            ParametersOperation.id_nomenclature_parameters,
+            ParametersOperation.value,
+            NomenclatureParameters.id_nomenclature_parameters,
+            NomenclatureParameters.name_parameters
+        )
+        .join(NomenclatureParameters,
+              ParametersOperation.id_nomenclature_parameters == NomenclatureParameters.id_nomenclature_parameters)
+        .filter(ParametersOperation.id_operations == operation_id)
+        .all()
+    )
+    session_db.close()
+ 
+    operation_name       = Operation.query.filter_by(id_operations=operation_id).first()
+    materials            = Materials.query.all()
+    parameters_operations = NomenclatureParameters.query.all()
+    coeffcuttings        = CoeffCutting.query.all()
+ 
+    price_material  = None
+    price_operation = None
+ 
+    conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
+    cur  = conn.cursor()
+ 
+    if operation_name.id_materials is not None:
+        cur.execute("SELECT name, price FROM materials WHERE id_materials = %s",
+                    (operation_name.id_materials,))
+        result = cur.fetchone()
+        if result:
+            _, price = result
+            cur.execute("""SELECT quantity_output FROM orders
+                           WHERE id_order=%s AND id_parent_operation=%s AND id_child_operation=%s""",
+                        (order_id, parent_id, operation_id))
+            row = cur.fetchone()
+            kol = row[0] if row else 0
+            price_material = price * kol
+ 
+    cur.execute("SELECT amount FROM price_list WHERE id_price = %s", (operation_name.id_price,))
+    row = cur.fetchone()
+    price_operation = row[0] if row else None
+    conn.close()
+ 
+    return render_template('operation_panel.html',
+        operation_name=operation_name,
+        results=results,
+        order_id=order_id,
+        operation_id=operation_id,
+        parent_id=parent_id,
+        materials=materials,
+        parameters_operations=parameters_operations,
+        coeffcuttings=coeffcuttings,
+        price_material=price_material,
+        price_operation=price_operation
+    )
+
+
+@app.route('/operation_panel_readonly/<int:operation_id>', methods=['POST'])
+def operation_panel_readonly(operation_id):
+    """Readonly-версия панели операции для шаблонов, удалённых и проверенных заказов."""
+    order_id  = request.form.get('order_id')
+    parent_id = request.form.get('parent_id')
+
+    session_db = db.session
+    results = (
+        session_db.query(
+            ParametersOperation.id_parameters,
+            ParametersOperation.id_operations,
+            ParametersOperation.id_nomenclature_parameters,
+            ParametersOperation.value,
+            NomenclatureParameters.id_nomenclature_parameters,
+            NomenclatureParameters.name_parameters
+        )
+        .join(NomenclatureParameters,
+              ParametersOperation.id_nomenclature_parameters == NomenclatureParameters.id_nomenclature_parameters)
+        .filter(ParametersOperation.id_operations == operation_id)
+        .all()
+    )
+    session_db.close()
+
+    operation_name  = Operation.query.filter_by(id_operations=operation_id).first()
+    materials       = Materials.query.all()
+    coeffcuttings   = CoeffCutting.query.all()
+
+    price_material  = None
+    price_operation = None
+
+    conn = psycopg2.connect("dbname=Printing user=postgres password=1234")
+    cur  = conn.cursor()
+
+    if operation_name.id_materials is not None:
+        cur.execute("SELECT name, price FROM materials WHERE id_materials = %s",
+                    (operation_name.id_materials,))
+        result = cur.fetchone()
+        if result:
+            _, price = result
+            cur.execute("""SELECT quantity_output FROM orders
+                           WHERE id_order=%s AND id_parent_operation=%s AND id_child_operation=%s""",
+                        (order_id, parent_id, operation_id))
+            row = cur.fetchone()
+            kol = row[0] if row else 0
+            price_material = price * kol
+
+    cur.execute("SELECT amount FROM price_list WHERE id_price = %s", (operation_name.id_price,))
+    row = cur.fetchone()
+    price_operation = row[0] if row else None
+    conn.close()
+
+    return render_template('operation_panel_readonly.html',
+        operation_name=operation_name,
+        results=results,
+        order_id=order_id,
+        operation_id=operation_id,
+        parent_id=parent_id,
+        materials=materials,
+        coeffcuttings=coeffcuttings,
+        price_material=price_material,
+        price_operation=price_operation
+    )
+
+
+@app.route('/add_operation_panel', methods=['POST'])
+def add_operation_panel():
+    """Возвращает HTML-фрагмент формы добавления операции (AJAX)."""
+    order_id  = request.form.get('order_id')
+    parent_id = request.form.get('parent_id')
+ 
+    session_db = db.session
+    results1 = (
+        session_db.query(
+            Operation.id_operations,
+            Operation.name_operations,
+            TypeWork.name_type_work
+        )
+        .join(TypeWork, Operation.id_type_work == TypeWork.id_type_work)
+        .filter(Operation.id_operations != 0, Operation.base == True)
+        .group_by(Operation.id_operations, Operation.name_operations, TypeWork.name_type_work)
+        .all()
+    )
+ 
+    return render_template('add_operation_panel.html',
+        order_id=order_id,
+        parent_id=parent_id,
+        results1=results1
+    )
 
 
 @app.route('/generate_pdf/<int:order_id>')

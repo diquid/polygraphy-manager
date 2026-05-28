@@ -13,7 +13,7 @@
 
 <script src="{{ url_for('static', filename='js/help.js') }}"></script>
 
-<body data-help="tree,calculation">
+<body data-help="tree">
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -41,8 +41,6 @@
                             onclick="window.location.href='/passport/{{ order.id_order }}'">Паспорт заказа</button>
                         <button class="btn active"
                             onclick="window.location.href='/tree/{{ order.id_order }}'">Технологическая схема</button>
-                        <button class="btn btn-secondary"
-                            onclick="window.location.href='/materials/{{ order.id_order }}'">Материалы заказа</button>
                     </div>
                 </div>
             </div>
@@ -59,13 +57,12 @@
     {% endif %}
     {% endwith %}
 
+    <!-- Верхняя часть: дерево + правая колонка -->
     <div class="tree-layout">
 
-        <!-- Левая карточка -->
+        <!-- Левая карточка: дерево -->
         <div class="tree-card">
-
-            <div
-                id="tree-container"
+            <div id="tree-container"
                 class="tree-content
                 tree-padding
                 tree-vertical-lines
@@ -73,134 +70,80 @@
                 tree-summaries
                 tree-markers
                 tree-buttons">
-
                 {{ tree_html|safe }}
-
             </div>
-
         </div>
 
         <!-- Правая колонка -->
         <div class="tree-right-column">
 
-            <!-- Верхняя панель -->
+            <!-- Расчёт стоимости -->
             <div class="control-card">
-
-                <form
-                    method="POST"
+                <form method="POST"
                     action="{{ url_for('calculate_cost', order_id=order_id) }}"
                     class="cost-form form-group">
 
-                    <input
-                        type="number"
-                        id="circulation"
-                        name="circulation"
-                        value="{{ circulation }}"
-                        required
-                        placeholder="Введите тираж"
+                    <input type="number" id="circulation" name="circulation"
+                        value="{{ circulation }}" required placeholder="Введите тираж"
                         class="control-input form-control">
 
-                    <button
-                        class="btn btn-action"
-                        type="submit">
+                    <button class="btn btn-action" type="submit">Рассчитать стоимость</button>
 
-                        Рассчитать стоимость
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn btn-action-secondary"
+                    <button type="button" class="btn btn-action-secondary"
                         onclick="window.location.href='/generate_pdf/{{ order_id }}'">
-
                         Сгенерировать PDF
-
                     </button>
-
                 </form>
 
                 <div class="cost-row form-group">
-
-                    <label
-                        for="total_cost"
-                        class="cost-label">
-
-                        Стоимость:
-
-                    </label>
-
-                    <input
-                        type="text"
-                        id="total_cost"
-                        name="total_cost"
-                        value="{{ total_cost | round(2)}}"
-                        readonly
+                    <label for="total_cost" class="cost-label">Стоимость:</label>
+                    <input type="text" id="total_cost" name="total_cost"
+                        value="{{ total_cost | round(2)}}" readonly
                         class="control-input cost-input form-control">
-
                 </div>
-
             </div>
 
-            <!-- Материалы + Изображение в ряд -->
-            <div class="cards-row">
-
-                <!-- Материалы -->
-                <div class="materials-card materials-section">
-
-                    <div class="materials-header">
-
-                        <h2>Материалы</h2>
-
-                        <button class="add-button">
-                            +
-                        </button>
-
-                    </div>
-
-                    <div class="materials-content materials-table">
-
-                        {{ html_materials|safe }}
-
-                    </div>
-
+            <!-- Панель операции (readonly) -->
+            <div class="control-card" id="operation-panel">
+                <div class="tc-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1.5" width="36" height="36">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"/>
+                    </svg>
+                    <p>Выберите операцию в дереве для просмотра</p>
                 </div>
-
-                <!-- Изображение номенклатуры -->
-                <div class="materials-card materials-section">
-
-                    <div class="materials-header">
-
-                        <h2>Изображение</h2>
-
-                    </div>
-
-                    <div class="materials-content d-flex justify-content-center align-items-center">
-
-                        {% if nomenclature and nomenclature.image_filename %}
-
-                            <img
-                                src="{{ url_for('static',
-                                filename='uploads/nomenclature/' + nomenclature.image_filename) }}"
-                                alt="Изображение номенклатуры"
-                                style="
-                                    max-width: 100%;
-                                    max-height: 260px;
-                                    object-fit: contain;
-                                    border-radius: 12px;
-                                ">
-
-                        {% else %}
-
-                            <p>Изображение отсутствует</p>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
             </div>
 
+        </div>
+
+    </div>
+
+    <!-- Нижний ряд: Материалы + Изображение -->
+    <div class="cards-row" style="margin-top: 1rem;">
+
+        <div class="materials-card materials-section" style="flex: 2;">
+            <div class="materials-header">
+                <h2>Материалы</h2>
+            </div>
+            <div class="materials-content materials-table">
+                {{ html_materials|safe }}
+            </div>
+        </div>
+
+        <div class="materials-card materials-section" style="flex: 1;">
+            <div class="materials-header">
+                <h2>Изображение</h2>
+            </div>
+            <div class="materials-content d-flex justify-content-center align-items-center">
+                {% if nomenclature and nomenclature.image_filename %}
+                    <img src="{{ url_for('static', filename='uploads/nomenclature/' + nomenclature.image_filename) }}"
+                        alt="Изображение номенклатуры"
+                        style="max-width:100%; max-height:260px; object-fit:contain; border-radius:12px;">
+                {% else %}
+                    <p>Изображение отсутствует</p>
+                {% endif %}
+            </div>
         </div>
 
     </div>
@@ -213,9 +156,46 @@
             });
         });
 
-        function showPrintingSystem() {
-            window.location.href = '/index';
+        /* Загрузка readonly-панели операции по клику на мишень */
+        function loadOperationPanel(btn) {
+            const operationId = btn.dataset.operationId;
+            const orderId     = btn.dataset.orderId;
+            const parentId    = btn.dataset.parentId;
+            const panel       = document.getElementById('operation-panel');
+
+            document.querySelectorAll('.btn-target').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            panel.innerHTML = '<div class="tc-placeholder"><p>Загрузка...</p></div>';
+
+            const formData = new FormData();
+            formData.append('order_id',  orderId);
+            formData.append('parent_id', parentId);
+
+            fetch(`/operation_panel_readonly/${operationId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.text())
+            .then(html => {
+                panel.innerHTML = html;
+                matchTreeHeight();
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="tc-placeholder"><p>Ошибка загрузки</p></div>';
+            });
         }
+
+        function matchTreeHeight() {
+            const treeCard    = document.querySelector('.tree-card');
+            const rightColumn = document.querySelector('.tree-right-column');
+            if (!treeCard || !rightColumn) return;
+            treeCard.style.height = 'auto';
+            treeCard.style.height = rightColumn.getBoundingClientRect().height + 'px';
+        }
+
+        document.addEventListener('DOMContentLoaded', matchTreeHeight);
+        window.addEventListener('resize', matchTreeHeight);
     </script>
 </body>
 

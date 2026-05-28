@@ -1,0 +1,91 @@
+<!-- Заголовок -->
+<div class="op-panel-title">
+    <span>{{ operation_name.name_operations }}</span>
+    {% if operation_name.decoding %}
+    <span class="op-panel-decoding">{{ operation_name.decoding }}</span>
+    {% endif %}
+</div>
+
+<!-- Расшифровка -->
+<div class="tc-field-row">
+    <label class="tc-field-label">Расшифровка:</label>
+    <div class="tc-field-inner">
+        <input type="text" value="{{ operation_name.decoding }}" class="control-input" style="flex:1;" disabled>
+    </div>
+</div>
+
+<!-- Параметры операции: таблица -->
+<div class="tc-field-row">
+    <label class="tc-field-label">Параметры операции:</label>
+    <table class="op-params-table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Значение</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result.name_parameters }}</td>
+                <td>
+                    <input type="text" value="{{ result.value }}" class="control-input" disabled>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if results|length == 0 %}
+            <tr><td colspan="2" class="op-no-params">Параметры не добавлены</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Материал -->
+<div class="tc-field-row">
+    <label class="tc-field-label">Материал:</label>
+    <div class="tc-field-inner">
+        <select class="control-input" style="flex:1;" disabled>
+            {% for material in materials %}
+            <option value="{{ material.id_materials }}"
+                {% if material.id_materials == operation_name.id_materials %}selected{% endif %}>
+                {{ material.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <input type="number" value="{{ operation_name.number_materials }}"
+            class="control-input" style="width:90px;flex-shrink:0;" disabled>
+    </div>
+</div>
+
+<!-- Количество в родительской -->
+<div class="tc-field-row">
+    <label class="tc-field-label">Количество в родительской:</label>
+    <div class="tc-field-inner">
+        <input type="number" value="{{ operation_name.quantity_in_one }}"
+            class="control-input" style="flex:1;" disabled>
+    </div>
+</div>
+
+<!-- Коэффициент резки (только для Резки) -->
+{% if operation_name.processing == 'Резка' %}
+<div class="tc-field-row">
+    <label class="tc-field-label">Коэффициент резки:</label>
+    <div class="tc-field-inner">
+        <select class="control-input" style="flex:1;" disabled>
+            {% for coefficient in coeffcuttings %}
+            <option value="{{ coefficient.id_coeff_cutting }}"
+                {% if coefficient.id_coeff_cutting == operation_name.id_coeff_cutting %}selected{% endif %}>
+                {{ coefficient.name_coeff_cutting }} ({{ coefficient.coeff_cutting }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+{% endif %}
+
+{% if price_material is not none %}
+<div class="op-price-row">Стоимость материала: <strong>{{ price_material }}</strong></div>
+{% endif %}
+{% if price_operation is not none %}
+<div class="op-price-row">Стоимость операции: <strong>{{ price_operation }}</strong></div>
+{% endif %}

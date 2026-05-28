@@ -1,0 +1,140 @@
+<input type="hidden" id="panel-operation-id" value="{{ operation_id }}">
+<input type="hidden" id="panel-order-id" value="{{ order_id }}">
+<input type="hidden" id="panel-parent-id" value="{{ parent_id }}">
+
+<!-- Заголовок -->
+<div class="op-panel-title">
+    <span>{{ operation_name.name_operations }}</span>
+    {% if operation_name.decoding %}
+    <span class="op-panel-decoding">{{ operation_name.decoding }}</span>
+    {% endif %}
+</div>
+
+<!-- Расшифровка -->
+<form method="POST" action="{{ url_for('update_decoding') }}" class="tc-field-row">
+    <label class="tc-field-label">Расшифровка:</label>
+    <div class="tc-field-inner">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <input type="text" name="decoding" value="{{ operation_name.decoding }}" class="control-input" style="flex:1;">
+        <button type="submit" class="btn btn-action">Сохранить</button>
+    </div>
+</form>
+
+<!-- Параметры операции: таблица -->
+<div class="tc-field-row">
+    <label class="tc-field-label">Параметры операции:</label>
+    <form method="POST" action="{{ url_for('update_parameters', operation_id=operation_id) }}">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <table class="op-params-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Значение</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.name_parameters }}</td>
+                    <td>
+                        <input type="text" name="value_{{ result.id_parameters }}"
+                            value="{{ result.value }}" class="control-input" required>
+                        <input type="hidden" name="id_parameters" value="{{ result.id_parameters }}">
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if results|length == 0 %}
+                <tr><td colspan="2" class="op-no-params">Параметры не добавлены</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {% if results|length > 0 %}
+        <button type="submit" class="btn btn-action" style="margin-top:0.6rem;">Сохранить изменения</button>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Добавить параметр -->
+<form method="POST" action="{{ url_for('parameters_add') }}" class="tc-field-row">
+    <label class="tc-field-label">Добавить параметр:</label>
+    <div class="tc-field-inner">
+        <input type="hidden" name="id_order" value="{{ order_id }}">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <select name="nomenclature_id" class="control-input" style="flex:1;" required>
+            <option value="">Выберите...</option>
+            {% for parameter in parameters_operations %}
+            <option value="{{ parameter.id_nomenclature_parameters }}">{{ parameter.name_parameters }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-action">Добавить</button>
+    </div>
+</form>
+
+<!-- Материал -->
+<form method="POST" action="{{ url_for('update_material') }}" class="tc-field-row">
+    <label class="tc-field-label">Материал:</label>
+    <div class="tc-field-inner">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <select name="new_material" class="control-input" style="flex:1;" required>
+            <option value="">Выберите материал</option>
+            {% for material in materials %}
+            <option value="{{ material.id_materials }}"
+                {% if material.id_materials == operation_name.id_materials %}selected{% endif %}>
+                {{ material.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <input type="number" name="number_material" value="{{ operation_name.number_materials }}"
+            min="0.1" step="0.1" placeholder="Кол-во" class="control-input" style="width:90px;flex-shrink:0;" required>
+        <button type="submit" class="btn btn-action">Сохранить</button>
+    </div>
+</form>
+
+<!-- Количество в родительской -->
+<form method="POST" action="{{ url_for('update_quantity_in_one') }}" class="tc-field-row">
+    <label class="tc-field-label">Количество в родительской:</label>
+    <div class="tc-field-inner">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <input type="number" name="quantity_in_one" value="{{ operation_name.quantity_in_one }}"
+            min="0.1" step="0.1" class="control-input" style="flex:1;" required>
+        <button type="submit" class="btn btn-action">Сохранить</button>
+    </div>
+</form>
+
+<!-- Коэффициент резки (только для Резки) -->
+{% if operation_name.processing == 'Резка' %}
+<form method="POST" action="{{ url_for('update_coeff_cutting') }}" class="tc-field-row">
+    <label class="tc-field-label">Коэффициент резки:</label>
+    <div class="tc-field-inner">
+        <input type="hidden" name="id_order" value="{{ order_id }}">
+        <input type="hidden" name="operation_id" value="{{ operation_id }}">
+        <input type="hidden" name="parent_id" value="{{ parent_id }}">
+        <select name="cutting_coefficient" class="control-input" style="flex:1;" required>
+            <option value="">Выберите коэффициент...</option>
+            {% for coefficient in coeffcuttings %}
+            <option value="{{ coefficient.id_coeff_cutting }}"
+                {% if coefficient.id_coeff_cutting == operation_name.id_coeff_cutting %}selected{% endif %}>
+                {{ coefficient.name_coeff_cutting }} ({{ coefficient.coeff_cutting }})
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-action">Сохранить</button>
+    </div>
+</form>
+{% endif %}
+
+{% if price_material is not none %}
+<div class="op-price-row">Стоимость материала: <strong>{{ price_material }}</strong></div>
+{% endif %}
+{% if price_operation is not none %}
+<div class="op-price-row">Стоимость операции: <strong>{{ price_operation }}</strong></div>
+{% endif %}

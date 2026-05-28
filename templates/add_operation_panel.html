@@ -1,0 +1,32 @@
+<div class="op-panel-title">
+    <span>Добавить операцию</span>
+    <span class="op-panel-decoding">Родительская: {{ parent_id }}</span>
+</div>
+
+<form method="POST" action="{{ url_for('add_operation_new') }}"
+      onsubmit="submitAddOperation(event, this)">
+
+    <input type="hidden" name="order_id"  value="{{ order_id }}">
+    <input type="hidden" name="parent_id" value="{{ parent_id }}">
+
+    <div class="tc-field-row">
+        <label class="tc-field-label">Дочерняя операция:</label>
+        <div class="tc-field-inner">
+            <select name="operation_id" class="control-input" style="flex:1;" required>
+                <option value="">Выбрать операцию...</option>
+                {% for operation in results1 %}
+                <option value="{{ operation.id_operations }}">
+                    {{ operation.id_operations }} : {{ operation.name_type_work }} : {{ operation.name_operations }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div style="margin-top: 1rem; display: flex; gap: 0.6rem;">
+        <button type="submit" class="btn btn-action">Добавить операцию</button>
+        <button type="button" class="btn btn-secondary"
+                onclick="loadPlaceholder()">Отмена</button>
+    </div>
+
+</form>

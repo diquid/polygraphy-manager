@@ -41,8 +41,6 @@
                             onclick="window.location.href='/passport/{{ order.id_order }}'">Паспорт заказа</button>
                         <button class="btn active"
                             onclick="window.location.href='/tree/{{ order.id_order }}'">Технологическая схема</button>
-                        <button class="btn btn-secondary"
-                            onclick="window.location.href='/materials/{{ order.id_order }}'">Материалы заказа</button>
                     </div>
                 </div>
             </div>
@@ -59,6 +57,7 @@
     {% endif %}
     {% endwith %}
 
+    <!-- Верхняя часть: дерево + правая колонка -->
     <div class="tree-layout">
 
         <!-- Левая карточка -->
@@ -135,37 +134,43 @@
 
             </div>
 
-            <!-- Материалы + Изображение в ряд -->
-            <div class="cards-row">
+            <!-- Панель операции: показывается после клика на мишень -->
+            <div class="control-card" id="operation-panel">
+                <div class="tc-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1.5" width="36" height="36">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"/>
+                    </svg>
+                    <p>Для начала работы выберите операцию в дереве</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Нижний ряд: Материалы + Изображение на всю ширину -->
+    <div class="cards-row" style="margin-top: 1rem;">
 
                 <!-- Материалы -->
-                <div class="materials-card materials-section">
+                <div class="materials-card materials-section" style="flex: 2;">
 
                     <div class="materials-header">
-
                         <h2>Материалы</h2>
-
-                        <button class="add-button">
-                            +
-                        </button>
-
                     </div>
 
                     <div class="materials-content materials-table">
-
                         {{ html_materials|safe }}
-
                     </div>
 
                 </div>
 
                 <!-- Изображение номенклатуры -->
-                <div class="materials-card materials-section">
+                <div class="materials-card materials-section" style="flex: 1;">
 
                     <div class="materials-header">
-
                         <h2>Изображение</h2>
-
                     </div>
 
                     <div class="materials-content d-flex justify-content-center align-items-center">
@@ -195,10 +200,6 @@
 
             </div>
 
-        </div>
-
-    </div>
-
     <script>
         document.querySelectorAll(".caret").forEach(function (caret) {
             caret.addEventListener("click", function () {
@@ -210,6 +211,156 @@
         function showPrintingSystem() {
             window.location.href = '/index';
         }
+
+        /* Перехват submit всех форм внутри панели операции */
+        document.getElementById('operation-panel').addEventListener('submit', function(event) {
+            const form = event.target;
+            // Не перехватываем форму добавления операции — у неё свой обработчик
+            if (form.onsubmit) return;
+            event.preventDefault();
+
+            const panel = document.getElementById('operation-panel');
+            const formData = new FormData(form);
+
+            panel.innerHTML = '<div class="tc-placeholder"><p>Сохранение...</p></div>';
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(r => r.text())
+            .then(html => {
+                panel.innerHTML = html;
+                matchTreeHeight();
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="tc-placeholder"><p>Ошибка при сохранении</p></div>';
+            });
+        });
+
+        /* Загрузка формы добавления операции по клику на + */
+        function loadAddOperationPanel(btn) {
+            const orderId  = btn.dataset.orderId;
+            const parentId = btn.dataset.parentId;
+            const panel    = document.getElementById('operation-panel');
+
+            // Подсветить активную кнопку
+            document.querySelectorAll('.btn-target, .btn-add-op').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            panel.innerHTML = '<div class="tc-placeholder"><p>Загрузка...</p></div>';
+
+            const formData = new FormData();
+            formData.append('order_id',  orderId);
+            formData.append('parent_id', parentId);
+
+            fetch('/add_operation_panel', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.text())
+            .then(html => {
+                panel.innerHTML = html;
+                matchTreeHeight();
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="tc-placeholder"><p>Ошибка загрузки</p></div>';
+            });
+        }
+
+        /* Отправка формы добавления операции через AJAX — обновляет дерево без перезагрузки */
+        function submitAddOperation(event, form) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const panel    = document.getElementById('operation-panel');
+            const treeContainer = document.getElementById('tree-container');
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(r => r.text())
+            .then(treeHtml => {
+                // Обновляем дерево
+                treeContainer.innerHTML = treeHtml;
+
+                // Восстанавливаем обработчики caret для нового дерева
+                treeContainer.querySelectorAll('.caret').forEach(function(caret) {
+                    caret.addEventListener('click', function() {
+                        this.parentElement.querySelector('.nested').classList.toggle('active');
+                        this.classList.toggle('caret-down');
+                    });
+                });
+
+                // Возвращаем плейсхолдер в панель
+                loadPlaceholder();
+                matchTreeHeight();
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="tc-placeholder"><p>Ошибка при добавлении</p></div>';
+            });
+        }
+
+        /* Показать плейсхолдер */
+        function loadPlaceholder() {
+            const panel = document.getElementById('operation-panel');
+            document.querySelectorAll('.btn-target, .btn-add-op').forEach(b => b.classList.remove('active'));
+            panel.innerHTML = `<div class="tc-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="1.5" width="36" height="36">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"/>
+                </svg>
+                <p>Для начала работы выберите операцию в дереве</p>
+            </div>`;
+            matchTreeHeight();
+        }
+
+        /* Загрузка панели операции по клику на мишень */
+        function loadOperationPanel(btn) {
+            const operationId = btn.dataset.operationId;
+            const orderId     = btn.dataset.orderId;
+            const parentId    = btn.dataset.parentId;
+            const panel       = document.getElementById('operation-panel');
+
+            document.querySelectorAll('.btn-target, .btn-add-op').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            panel.innerHTML = '<div class="tc-placeholder"><p>Загрузка...</p></div>';
+
+            const formData = new FormData();
+            formData.append('order_id',  orderId);
+            formData.append('parent_id', parentId);
+
+            fetch(`/operation_panel/${operationId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.text())
+            .then(html => {
+                panel.innerHTML = html;
+                matchTreeHeight();
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="tc-placeholder"><p>Ошибка загрузки</p></div>';
+            });
+        }
+
+        /* Выравниваем высоту блока дерева по высоте правой колонки */
+        function matchTreeHeight() {
+            const treeCard     = document.querySelector('.tree-card');
+            const rightColumn  = document.querySelector('.tree-right-column');
+            if (!treeCard || !rightColumn) return;
+            treeCard.style.height = 'auto';
+            const rightHeight = rightColumn.getBoundingClientRect().height;
+            treeCard.style.height = rightHeight + 'px';
+        }
+
+        document.addEventListener('DOMContentLoaded', matchTreeHeight);
+        window.addEventListener('resize', matchTreeHeight);
     </script>
 </body>
 
