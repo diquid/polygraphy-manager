@@ -2911,9 +2911,7 @@ def calculate_cost(order_id):
             print("Ошибка: Тираж не был введен.")
             return redirect(url_for('tree', order_id=order_id))
 
-        conn = psycopg2.connect(
-            "dbname=Printing user=postgres password=1234"
-        )
+        conn = psycopg2.connect("dbname=Printing user=postgres password=1234 host=localhost")
 
         cur = conn.cursor()
 
